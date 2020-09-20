@@ -15,7 +15,7 @@ The OS helps the machine allocate resources to processes that require them.
 \end{abstract}
 
 The OS allocates resources to different processes on a computer. 
-\subsection{Interrupts}
+\subsection{Computer System Organization}
 When we have an I/O request, the device controller will receive a signal to load 
 and move the data to the CPU or main memory. When this process is done, the controller
 will send a signal to the CPU informing of a successful completion of the transfer.
@@ -24,20 +24,6 @@ There are wother ways of triggering a system interrupt. Sometimes the program mi
 create an interrupt, known as a \textbf{software interrupt}. Other times, the 
 hardware itself might create an interrupt. When this happens, there is a wire
 connected to the CPU which is directly activated.
-
-\subsection{Computer System Architecture}
-In days past, the comptuer was able to run on a single \textbf{core}, which 
-executed a general instruciton set needed by application programs. 
-There could also be some smaller and different processors such as 
-\textbf{controllers}.
-\footnote{A \textbf{controller} is a type of device which handles taking information
-from I/O devices and getting it to the CPU. A controller usually has its own buffer,
-where it stores the data it is responsible for fetching before sending it to memory or 
-CPU.}
-
-However, recently there are multicore systems, which have more than one physical core.
-This means that they can execute more than one instruction at at a time. 
-However, it depends on whether there are any resources to allocate available.
 
 There are a couple useful distinctions:
 \begin{itemize}
@@ -60,4 +46,41 @@ There are a couple useful distinctions:
 	\end{figure}
 \end{center}
 
+
+\subsection{Computer System Architecture}
+In days past, the comptuer was able to run on a single \textbf{core}, which 
+executed a general instruciton set needed by application programs. 
+There could also be some smaller and different processors such as 
+\textbf{controllers}.
+\footnote{A \textbf{controller} is a type of device which handles taking information
+from I/O devices and getting it to the CPU. A controller usually has its own buffer,
+where it stores the data it is responsible for fetching before sending it to memory or 
+CPU.}
+
+However, recently there are multicore systems, which have more than one physical core.
+This means that they can execute more than one instruction at at a time. 
+However, it depends on whether there are any resources to allocate available.
+These systems will usually share L2 cache, but L1 is local for each core. Since there
+will be $N$ individual CPUs according to the comptuer, application programmers should
+effectively use all the cores.
+
+Why does continually adding more CPU cores not work \textit{ad infinitum}? There is 
+an overhead performance penalty when trying to coordinate their loading. Also, once 
+we add too many CPUs, the competition for the system bus might bottleneck performance.
+
+\textbf{Blade servers} usually have multiple machines on the same chassis. 
+\textbf{Clustered systems} are usually independent computers that share mostly storage.
+They might be individual multicore systems that are interconnected to share storage.
+Clustered systems are usually used in systems where we need the maximum reliability.
+The advantage of having clustered systems is that we can monitor the performance of the
+other nodes. We can assign one node in the cluster to monitor another one of the nodes.
+If the observed node fails, we can set the monitoring node to take over the failed node's
+operation, and report the error.
+
+Some other types of netrowks might run on wide-area-networks and thus require to be 
+connected over many miles. Software such as Oracle's database system might run on every 
+onde in the network, as well as have a layer of software controlling other aspects of
+resource allocation.
+
+\subsection{Operating System Operations}
 \end{document}
