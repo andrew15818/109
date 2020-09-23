@@ -83,4 +83,41 @@ onde in the network, as well as have a layer of software controlling other aspec
 resource allocation.
 
 \subsection{Operating System Operations}
+The first step the Operating System is responsible for is initializing the programs
+that will run on the user's computer.
+First, we load a \textbf{bootstrap} program, which is in charge of loading the operating
+system into memory.
+
+The kernel then runs and initializes I/O and starts other daemons. 
+If there is nothing happening at the moment, then we wait 
+for certain \textbf{interrupts}, which are the hardware's way of signalling events.
+When a certain program is being executed, it is called a \textbf{process}. The CPU
+has several programs in main memory at a given time, which leads to a better utilization
+of the of the CPU. 
+This is because the CPU might finish a program and will have to wait while the next 
+one is loaded into memory. Also, the CPU might be idle while waiting for an I/O operation.
+If the CPU did not have another program to execute in the meantime, the CPU would idle.
+
+\subsection{Dual-Mode Operation}
+We also need to differentiate between user programs that are executing and actual 
+OS code that is running. We need this to ensure that malicious user programs cannot
+affect the way the OS runs. The two modes are: \textbf{user mode} and \textbf{kernel mode}.
+We distinguis them by using a \textbf{mode bit} directly in the hardware. When the OS 
+first loads, it does so in kernel mode, and when it's time to execute a user program,
+we switch the bit to user mode.
+
+\subsection{Resource Management}
+We remember that the OS is the main reource manager in a system. This means that when
+a process requires some memory resources, the CPU will allcoate those resources and then 
+reclaim them when the process is over.
+
+\textbf{Memory management} requires us to efficiently use the main memory. When a program
+is executed, it first has to be loaded into main memory. It uses a direct address to fetch
+the instruction to execute next. The OS can decide when the information needs to move in
+and out of main memory and how much space the process requires.
+
+The computer stores information in a the basic logical storage unit called a \textbf{file}.
+Files are then stored on secondary and tertiary storage, and can take either textual
+or binary form.
+
 \end{document}
