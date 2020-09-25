@@ -120,4 +120,33 @@ The computer stores information in a the basic logical storage unit called a \te
 Files are then stored on secondary and tertiary storage, and can take either textual
 or binary form.
 
+Another important aspect of operating systems is how we store the files on the disks.
+Some important things to do with files and storage are: 
+\begin{itemize}
+		\item \textbf{Mounting}: Making filesystems available on the user's computer.
+		\item \textbf{Free-Space Management}: The OS has to keep track of how empty the 
+				disk is and how much space we have left, hence we have to keep track
+				of many file sizes.
+\end{itemize}
+
+Secondary and tertiary storage can be used for storage in a hard-drive disk or SSD on the
+computer, or even for some archival storage.
+
+\subsection{Virtualization}
+Virtualization allows us to run programs meant for one environment on another peice of 
+hardware. for example, I could have a software layer that tries to mimic other 
+OS. \textbf{Emulation} refers to the times when the source and target CPU are different
+and the program is not compiled to the native code. 
+
+With a virtual machine, we can let the host system act as if it's running an entirely 
+different system, with no need to recompile. We might use this technology when
+developing for multiple OSes. We don't need to buy an entire different system 
+if we use a VMM.
+
+\subsection{Distributed Systems}
+Distributed systems are those that run on a network. For example, the calculations
+that we need can be run on different computers. The biggest use case could be on a 
+datacenter, where a \textbf{load balancer} can take care of the way processes are run 
+and on which systems.
+
 \end{document}
