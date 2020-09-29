@@ -30,9 +30,88 @@ The OS has some key services that it provides:
 
 	\item \textbf{I/O operations}: For safety reasons, the user seldom interacts directly
 			with I/O devices, but the computer has to communicate with the outside. 
-			Writing to a network interface or talking with the filesystem maybe should not
-			be left to the user.....
-			
+			Writing to a network interface or talking with the filesystem maybe should 
+			not be left to the user.....
+
+	\item \textbf{Communication}: Sometimes programs need to communicate with each other,
+			maybe about error detection through sockets.
+
+	\item \textbf{Error Detection}: When there is an error allocating the resources,
+			memory or I/O error, the OS has to be there to detect and correct the error,
+			or to halt the system operation.
+	\item \textbf{Resource Allocation}: If there are multiple processes, the CPU has 
+			to manage the CPU scheduling routines for each process. There are some
+			routines to manage the CPU schedule to manage multiple processes.
+	\item \textbf{Logging}: If there is an error in your system, then the OS will
+			write what happened to some files. Then we can know what is happening 
+			in each process.
 \end{itemize}
 
+The way we interact with the operating system is also different. In Linux, the main 
+way to interact with the computer is through the \textbf{command line interface}, 
+where the user types the commands the computer is to execute. Other systems such as
+Windows and MacOs intend for the user to to use a graphical environment with icons 
+and graphical folders.
+
+\section{System Calls}
+When we want our system to perform some action, we will usually specify the filename
+to run, and provide it with any arguments necessary. For example, if we were to type
+
+\begin{center}
+		\texttt{cp foo.txt bar.txt}
+\end{center}
+in our terminal, then our OS would know what commands we wanted to run and on which
+files to do it. In this example, the \texttt{cp} will \textit{copy} a file 
+called \texttt{foo.txt} and copy to another file on the same directory called 
+\texttt{bar.txt}.
+Even in this simple command, there are multiple system calls going on,
+for example we have to open or create the files, then enter a loop which copies the 
+lines, which requires even more system calls.
+
+Usually the way that these calls are implemented is through an 
+\textbf{Application Programming Interface}. The shell program might make a request to 
+the API which then makes the system call. The reason for this is mostly to provide a 
+standard format for systems using the same interface. For example, systems all using
+the POSIX standard can all expect similar functionality from its function calls.
+
+When our API runs a command, how do we pass the information that the OS requires?
+There are two common approaches: \textbf{register method} and \textbf{bock method}.
+On Linux, if there are 5 or fewer parameters, we store the individual parameters in 
+registers. For more arguments, we use the block method. In this method we store all the
+parameters in a block in memory and pass the address of the block. We can also use 
+a stack to pass the arguments, since stacks don't care about the size or number
+of the arguments.
+
+\subsection{Types of System Calls}
+There are six major categories of system calls: \textbf{process control}, 
+\textbf{file management}, \textbf{device management},\textbf{information maintenance},
+\textbf{communications} and \textbf{protection}.
+
+\begin{enumerate}
+	\item \textbf{Process Control}: This are the calls responsible for running 
+			programs. If the program terminates normally or abnormally, we will
+			generate an appropriate error message. The system might generate a 
+			memory dump and place the results in a file for the program to check.
+
+			In programs involving system calls, we have to call direct system calls
+			from inside our program. For example, if we have a \texttt{printf()} 
+			instruction, we might have to call the equivalent \texttt{write()}
+			system call. This type of processes could also apply when we want to 
+			\textbf{lock} a certian resource, or prevent its modification until 
+			a later point in time.
+
+	\item \textbf{File Management}: When we interact with files, we might also need 
+			to create, close, modify, move, etc... files around the directory 
+			if we have one.
+	\item \textbf{Device Management}: When we have to interact with another device
+			such as disk, we have to ask for control of the device first, then
+			we can read the data, and finally close the connection. Since these
+			functions are similar to the ones used for files, some OSes (Linux) 
+			combine the two into one. This means that devices are treated as files.
+			The data from one device might be available directly somewhere on the 
+			file system!
+	\item \textbf{}
+	\item \textbf{}
+	\item \textbf{}
+\end{enumerate}
 \end{document}
