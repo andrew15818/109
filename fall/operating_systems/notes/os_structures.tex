@@ -110,8 +110,25 @@ There are six major categories of system calls: \textbf{process control},
 			combine the two into one. This means that devices are treated as files.
 			The data from one device might be available directly somewhere on the 
 			file system!
-	\item \textbf{}
-	\item \textbf{}
-	\item \textbf{}
+	\item \textbf{Information Maintenance}: There are also system calls for getting
+			information about the system. For example, we can get the \texttt{date()}
+			or \texttt{time()}, how much free space there is on the system, etc... 
+			These sytem calls are useful for debugging and knowing what order of 
+			system calls are being executed. We can use a CPU's \textbf{single step}
+			mode to find the order of instructions being executed.
+	\item \textbf{Communication}: A common theme is that we need to allow 
+			different programs to communicate with each other. We alaready saw some
+			general model of how to do this, either with a shared memory model or 
+			registers. How do we identify the program we want to talk to?
+
+			Each program gets a unique \textbf{process name} and 
+			\textbf{host name}, which will pass a message along. \textbf{Daemons}
+			are programs that accept connections from a client.
+
+	\item \textbf{Protection}: When computers had multiple users, it was important
+			for the system to control resource allocation among the users. Now, with 
+			the Internet the OS still has to control how resources are alocated
+			and how we protect the sytem.
 \end{enumerate}
+\section{System Services}
 \end{document}
