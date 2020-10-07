@@ -1,6 +1,6 @@
 \documentclass{tufte-handout}
 \usepackage{graphicx}
-\graphicspath{ {./img} }
+\graphicspath{ {./img/} }
 
 \title{Chapter 2: Operating System Structures}
 \author{Andr\'es Ponce}
@@ -75,7 +75,7 @@ standard format for systems using the same interface. For example, systems all u
 the POSIX standard can all expect similar functionality from its function calls.
 
 When our API runs a command, how do we pass the information that the OS requires?
-There are two common approaches: \textbf{register method} and \textbf{bock method}.
+There are two common approaches: \textbf{register method} and \textbf{block method}.
 On Linux, if there are 5 or fewer parameters, we store the individual parameters in 
 registers. For more arguments, we use the block method. In this method we store all the
 parameters in a block in memory and pass the address of the block. We can also use 
@@ -188,4 +188,120 @@ the OS on a given OS. This is the job of the \textbf{application binary interfac
 The ABI specifies instruction width and other low level details such as how to 
 pass the parameters to some functions (remember we have two methods), size of data types
 and format of libraries.
+
+\section{OS Design And Implementation}
+Although there is on general way to implement an operating system, we can agree on some
+general implementation principles.
+\footnote{The \textbf{policy} refers to \textit{what} to do, while the \textbf{mechanism}
+ refers to \textit{what} to do.}
+
+ Nowadays, OSes are mostly written in C, C++, and assembly for the lower-level parts.
+ Other systems such as Android will mix C, assembly and even Java. The disadvantages 
+ are of course the speed of the higher-level language.
+ \section{OS Structure}
+ Operating Systems are usually implemented in individual models, which are clearly 
+ defined pieces of code. 
+
+ \begin{marginfigure}
+	\includegraphics[scale=0.3]{OS_structure.png}
+	\caption{The structure of a traditional UNIX system.}
+\end{marginfigure}
+
+
+\subsection{Monolithic Structure}
+This type of OS structure involves just placing all the kernel into a single 
+binary file. There are no single modules that are loaded individually, but 
+instead all the kernel functionality is placed directly in one binary executable.
+For the original UNIX, all the filesystem, drivers, CPU scheduling existed in the
+kernel itself. For Windows this is still the way to go today. 
+
+Both Windows, Linux, and UNIX have some traces of monolithic kernel design still 
+left, however they also combine a layered and modular design. 
+
+The main benefit of a monolithic kernel is the reduced overhead and thus the increase
+in speed. This is why popular OSes still contain some trace of monolithic kernel design.
+The main drawback is how hard they are to maintain and expand.
+
+\subsection{Layered Approach}
+With a layered approach, each layer $m$ might be responsible for a set of data structures
+and functions that interact with upper and lower layers. Upper layers have to be 
+able to communicate with it, while it has to be able to communicate with lower layers.
+
+While these sorts of layers have successfully been applied to computer networks, 
+for operating systems they increase the amount of overhead. This is due to the 
+traversal of many layers to obtain some service. Also clearly defining the 
+function of a single layer can be complex.
+
+\subsection{Microkernel}
+Yet another approach to OS design is the microkernel, in which many non-essential 
+kernel functions are removed and instead treated as user programs. For example, the
+drivers and file system might be placed outside the kernel. The result is a kernel 
+that is a lot smaller and uses a lot less memory. The \textbf{Darwin} microkernel,
+used in MacOS might be the most famous example of microkernel.
+
+Again, the biggest drawback is the overhead involved in having two parts of the 
+OS communicate when the message have to go through the microkernel before there is some
+context switching happening.
+
+\subsection{Modules}
+The most effective way we can handle the kernel might be to have a kernel that 
+handles the most basic functions, such as scheduling and the file system. Then,
+during boot time or run time we can dynamically load modules we need. This approach
+reduces the hassle since we avoid compiling the kernel every time we want to load
+a new module.
+
+\section{Building and Booting an Operating System}
+How do we get an OS running? We might already have one installed on our computer
+at the time of purchase, but we will focus on the case where we don't have one.
+We would have to write the source code and then compile it for our current system.
+We could do it by modifying the \texttt{config} file and tailor the settings to our
+build.
+
+For the Linux kernel, we can follow something resembling these steps:
+\begin{enumerate}
+	\item Download the source code from \texttt{http://www.kernel.org}
+	\item Run \texttt{make menuconfig} to generate the \texttt{.config} file
+			that holds our settings.
+	\item Run \texttt{make} to compile the main kernel with the \texttt{.config} file
+			we have aleready generated.
+	\item Run \texttt{make modules} to compile the modules.
+	\item Run \texttt{make modules\_install} to install the modules on the kernel.
+	\item Finally, install the kernel by running \texttt{make install} and reboot.
+\end{enumerate}
+
+\section{System Boot}
+What happens when we press the power switch and turn the computer on? First, we 
+run a program called a \textbf{boot loader} which is in charge of locating the 
+kernel to be loaded, loading it into memory. The kernel then initializes the hardware
+and mounts the root file system.
+
+When the system is first turned on \footnote{ayyyy}, an initial bootloader is loaded
+from non-volatile memory.This initial boot loader might then load another boot loader
+such as GRUB from the \texttt{/boot} section of the disk. This next boot loader might
+then locate the kernel or allow the user to choose from many kernels. This boot 
+loader must be small enough to fit in the determined boot section of the disk.
+
+The Linux image is a compressed file which is decompressed when it is loaded into
+memory. This is done to speed up the boot process.
+\footnote{The boot loader will also create a separate RAM environment known as 
+\texttt{initramfs}, which loads the necessary drivers and kernel modules to load the
+OG kernel.}
+Then we mount the actual file system on the correct place.
+
+\section{Operating System Debugging}
+How can we fix problems occuring during the kernel execution? When there is a problem
+in the kernel, we will usually write the contents of the memory to a section of the 
+disk that does not contain a file system. This way, we can probe the code with a 
+debugger.
+
+A big part of debugging involves finding \textbf{performance bottlenecks}. To do this,
+the OS has to provide some way of measuring performance either by process or 
+system-wide. There are two methods: \textbf{counters} and \textbf{tracers}.
+
+\textbf{Counters} will keep track of how much resources either a single process 
+is using or how much resources are being used at a system level. In Linux, the details
+for process usage is stored in \texttt{/proc}, where each subdirectory indicates a 
+single process id and its statistics.
+
+\textbf{Tracing} involves looking at the steps involved in system call invocations.
 \end{document}
