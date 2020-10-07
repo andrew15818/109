@@ -131,4 +131,61 @@ There are six major categories of system calls: \textbf{process control},
 			and how we protect the sytem.
 \end{enumerate}
 \section{System Services}
+Some of the functionality that we have come to expect in an operating system includes
+file management, networking and communication, program loading and execution.
+
+\textbf{Services} or \textbf{daemons} are programs that usually run in the background.
+These programs might wait for requests, such as network managers, and others might 
+be monitoring processes.
+
+\section{Linkers and Loaders}
+Whenever we run a program, we have to first compile the source file into some object 
+file such as \texttt{a.out} or \texttt{a.exe}. The compiler will take the source 
+file and make an output file with the name as the previous one.
+
+It is the job of a linker to include any other code necessary in a source file,
+for example if we include \texttt{math.h}, the linker is responsible for making 
+a coherent file that we can run, with all the references to the pieces of code 
+in the correct places. 
+
+When we then type the executable name in the command prompt, we then create a new 
+process for the program to run in. We normally assume that the file was all linked
+and that all the required libraries were incorporated into the executable file. 
+However, on Windowd \textbf{dynamically linked libraries} are only loaded conditionally
+if they are needed by the program.
+
+Once we have the final executable file, inside there will a \textbf{symbol table} where
+we will have the address for the first instruction and maybe info on the functions
+and variables.
+
+\section{Why Are Applications Operating System Specific?}
+
+Application files will usually have some system calls which are unique to the operating
+system it's being run on. Some interpreted languages such as Python will read one
+instruction at a time, and execute the corresponding instruction on the host machine. 
+This would solve the problem for the programmer, who could write a single program
+and leave the actual implementation to the interpreter. The interpreter could then 
+run on many different environments. 
+\footnote{The Executable and Linkable Format \textbf{ELF} is used by most UNIX 
+varieties. This format specifies how the function/variable metadata is structured
+and stores the address of the starting point for our program.}
+
+Another solution, offered by languages like Java, includes running an entire RTE in 
+the form of a virtual machine, where we sometimes transform the code into an 
+intermediate language. Then the same source code could run on mulitple systems, 
+but likewise the performance will be impacted. 
+
+Once we have an executable file, the operating system expects a certain structure
+for the files, with elements that are a certain size, and even the CPU might only 
+accept instructions of a different type.\footnote{I'm not sure if this is more of an 
+ISA problem or an OS one. But then again, every OS is built to use a certain 
+ISA, right?}
+
+APIs specify the available functions at the application layer, meaning that the 
+programmer can interact directly with them. However, when dealing at the binary
+layer, we need an interface for the program's binary code to deal with 
+the OS on a given OS. This is the job of the \textbf{application binary interface}.
+The ABI specifies instruction width and other low level details such as how to 
+pass the parameters to some functions (remember we have two methods), size of data types
+and format of libraries.
 \end{document}
