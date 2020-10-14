@@ -1,0 +1,81 @@
+\documentclass{tufte-handout}
+\title{Chapter 3: Processes}
+\author{Andr\'es Ponce}
+\usepackage{graphicx}
+\graphicspath{ {./img/} }
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+A \textbf{process} is a program that is currently running.
+One of the main functions of an operating system is to run user programs,
+so the way an OS manages process execution, scheduling and memory management
+can become quite important.
+\end{abstract}
+
+The status of the current executing program can be known with the value of the 
+\textbf{program counter}
+\footnote{The PC stores the address of the currently executing instruction.}
+and the values currently in the registers.
+
+Usually, a program executable file has four distinct sections. The \textbf{text section}
+contains the executable code, while the \textbf{data section} contains the global 
+variable declarations. the \textbf{heap} is where the dynammic memory is allocated, and 
+the \textbf{stack} is where temporary variables are allocated. These variables are the ones
+used for function executions and are then deleted.
+
+The data and text sections of a program are fixed, since they do not change during execution.
+However, the stack and heap shrink as needed, and they grow \textbf{toward} each other but
+never \textbf{overlap} each other. \footnote{Then how do we account for really big programs?}
+
+The program state can fall into certain categories:
+\begin{itemize}
+	\item \textbf{New}: Process is being created.
+	\item \textbf{Running}: There are instructions being executed.
+	\item \textbf{Waiting}: Process is waiting for some event.
+	\item \textbf{Ready}: Process is ready to be assigned to CPU.
+	\item \textbf{Terminated}: Process finished execution.
+\end{itemize}
+
+\subsection{Process Control Block}
+The proces is represented in teh OS by using a block of memory containing program info called
+the \textbf{Process Control Block}. It stores a couple things:
+\begin{itemize}
+	\item \textbf{Process State}: One of previously mentioned process state.
+	\item \textbf{Program Counter}: Address of the next instruction to be executed.
+	\item \textbf{CPU registers}: There are different types of registers that store different
+				information. This has to be saved on interrupt to be able to resume when the 
+				interrupt is resolved.
+	\item \textbf{CPU scheduling}: Scheduling parameters.
+	\item \textbf{Mem. Mgmt. Information}: The value of the base and limit registers, page tables, 
+				segment tables, depending on memory scheme in computer.
+	\item \textbf{Accounting Information}: Amount of CPU and real time used, time limits, 
+				process/job numbers, etc...
+	\item \textbf{I/O Status Information}: List of open files, I/O devices allowed to use, etc...
+\end{itemize}
+
+The set of PCB's is stored as a linked-list, with the info stored in \texttt{include/linux/sched.h}.
+When we want to schedule a process, we have to change the state. Then we execute until we are
+finished or waiting for a process, and move to the next program in the \textbf{wait queue}.
+
+In terms of scheduling, each process gets a CPU core when it needs to and gets removed when 
+not in need of execution, such as waiting for I/O. For CPU bound instructions though, they also 
+don't get to execute constantly throughout its lifetime, the CPU scheduler might forcible remove
+it after a specified time limit. 
+
+When changing the CPU core from execution of one process to another, most systems will save the 
+current state of the executing program and load the state of the program to execute. This 
+switching of process is known in the biz as \textbf{context switching}, since the state of the 
+registers and execution point of a program when saved and loaded can be called the context.
+
+\section{Operations on Processes}
+When executing, each process on Windows and UNIX gets a unique \textbf{process identifier}, 
+\footnote{a.k.a. pid}
+which uniquely identifies the process in the kernel. Since each process can spawn other 
+children processes, the execution diagram can become an execution \textbf{tree}. In Linux, 
+the \texttt{systemd} process always has a pid of 1. This process is the only user program
+run at boot time, and every process starts under the systemd node in the execution tree. 
+The \texttt{logind} process manages the clients that are logged in to the system.
+
+\end{document}
