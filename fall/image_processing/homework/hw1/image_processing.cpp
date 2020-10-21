@@ -9,5 +9,5 @@ ImageProcessor::ImageProcessor(){
 }
 
 void process(const std::string& filename, const std::string& method){
-	std::cout<<"Hola :^D"<<std::endl;
+	
 }
