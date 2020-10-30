@@ -163,8 +163,47 @@ tells us in which file the command executes, and in the topmost section of the
 screenshot, we can see the value of the parameters with which this function was 
 called.
 
-![Done](img/rmdir_target\(12\).PNG)
+![Done](img/rmdir_target\(12\).PNG){width=60%}
 
 In the final screenshot, we can just see the action is executed in our Target machine. 
 The directory we wanted removed was deleted with the command and we were able 
 to analyze the output in the GDB console on the Host machine.
+
+![Triggering custom breakpoint](img/breakpoint\(15\).PNG){width=60%}
+
+The above screenshot shows the gdb triggering the breakpoint when we execute the 
+`rmdir` system call, or the `do_rmdir` call in C.o
+
+![Perf command help](img/perf_output\(16\).PNG){width=60%}
+
+![Copied file outputs](img/copied_file_output\(17\).PNG){width=60%}
+
+For the final section of the assignment, we have to measure the performance of an
+empty program and the program that copies the files, and compare which sections of 
+code will execute regardless of program content. When we copy the file, after running
+the specified commands, we see the copied files with the same contents. The files 
+and the copied files are seen in the second screenshot.
+
+![Perf program output](img/perf_trace_output\(18\).PNG){width=60%}
+
+![Diff program output](img/diff_output\(19\).PNG){width=60%}
+
+The `perf` program will measure all the system calls and the time it took to execute them. 
+We can see the different system calls related to memory, writing, reading, opening files etc..
+The results are shown in miliseconds, and we can profile the amount of time it takes to 
+execute.
+
+ Once we execute the perf program on the empty C file and the C program that copies the 
+programs, we see the difference between the two files using the `diff` program in Linux. 
+This program will point the common and different lines in two files. When we use it on the 
+two `perf` outputs, we can see the lines that they have in common, i.e. the calls that 
+are common to the two files, and the lines that differ among them.
+
+![Impact of file sizes on system call time](img/syscall_results.jpeg){scale=50%}
+
+The final analysis of the execution time for the system calls used reveal
+the relative invariance of the time taken by the system calls regardless of 
+file size. The file sizes were 12 Kb, 20 Kb, and 36 Kb, respectively. The 
+text used was just the contents of `OriginalFile.txt` copied multiple
+times. The only syscall that showed a spike in time required was the 
+`mmap` for a file size of 12 Kb.
