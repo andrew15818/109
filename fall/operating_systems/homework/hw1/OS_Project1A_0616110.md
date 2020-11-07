@@ -8,6 +8,13 @@ titlepage-rule-color: "360049"
 titlepage-rule-height: 0
 titlepage-background: "background.pdf"
 ---
+## Report video URL
+
+[click me:)](https://www.youtube.com/watch?v=EvJD1rmU8aE)
+
+Or, you can just copy paste the URL:
+
+https://www.youtube.com/watch?v=EvJD1rmU8aE
 
 # Discussion Questions
 
@@ -152,8 +159,9 @@ rather than directly booting into our system.
 
 Now that we are set to wait for a remote connection from a debugger, we next tell kgdb where this serial
 connection will be. We specify the `ttyS1` file which we had previously confirmed to be the point of 
-connection between our two systems. The next part, 112500 is the name of the port used to communicate 
-to the Target machine.
+connection between our two systems. The next part, 112500 is the name of the port on which we will be 
+receiving messages.
+
 
 9. **What is grub? What is grub.cfg?**
 
@@ -259,3 +267,5 @@ gdb instance, which we run on the linux image that we copied in the previous sec
 shows the host machine command line having the target machine kernel execution continue. On the target machine,
 this means the computer was caused to load. Now we are debugging the kernel on one machine and have it execute on 
 another machine.
+
+

@@ -1,4 +1,4 @@
-
+---
 title: "Operating Systems Homework 1 Report"
 author: [Andres Ponce, 0616110]
 date: "2020-10-24"
@@ -8,6 +8,8 @@ titlepage-rule-color: "360049"
 titlepage-rule-height: 0
 titlepage-background: "background.pdf"
 ---
+## Video Link
+[Click Me :D](https://www.youtube.com/watch?v=Y2CiygSIkk8)
 
 # Discussion Questions
 1. **What is a kernel function? What is a system call?**
@@ -207,3 +209,17 @@ file size. The file sizes were 12 Kb, 20 Kb, and 36 Kb, respectively. The
 text used was just the contents of `OriginalFile.txt` copied multiple
 times. The only syscall that showed a spike in time required was the 
 `mmap` for a file size of 12 Kb.
+
+![`sudo perf report`](img/sudo_perf_report\(21\).jpeg){width=60%}
+
+The `sudo perf report` command takes in the `perf.data` file which had been 
+generated in the previous step and makes a profile for that process. We can
+see some more detailed information such as cache misses, memory allocaiton,
+
+
+![`sudo perf ftrace`](img/sudo_perf_ftrace\(22\)..jpeg){width=60%}
+
+The `sudo perf ftrace` command shows the function call stack. We can see
+all the functions, and which functions are called inside any particular
+function. This is incredibly useful if we are experiencing unexpected
+resource utilizaiton or unexpected behavior.

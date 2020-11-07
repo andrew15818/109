@@ -1,0 +1,164 @@
+\documentclass{tufte-handout}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\graphicspath{ {./img/} }
+\title{Introduction to Operating Systems: Threads}
+\author{Andr\'es Ponce}
+
+\begin{document}
+\begin{abstract}
+A \textbf{thread} is a unit of CPU utilization. When 
+we open a thread, we are assigning a subsection of the 
+main process' resources to handle different tasks 
+concurrently.
+\end{abstract}
+
+\section{Motivation and Introduction}
+A thread allows us to carry different types of calculations at the same time.
+The threads start as a subset of the main process resources. A good example is a 
+server, where many different requests can be coming in. If we were to open a 
+new process for every request on a server, it would not be the most efficient 
+since creating an entirely new process can be expensive. 
+
+There are some benefits to creating a thread, such as:
+\begin{itemize}
+	\item \textbf{Responsiveness}: Threads allow a program to carry out multiple
+		calcuations at once, especially on multicore systems. For a GUI program,
+		if we press a button that causes some expensive calculation, then the
+		program might spawn a new thread to handle it in the background. If 
+		we had a single-threaded application, then we would have to wait for the 
+		application to finish to use the program again.
+	\item \textbf{Resource Sharing}: Previously we had said that there were two ways to
+		share information between processes: shared memory and direct messaging. Since the
+		threads share the same memory space as the parent process, then we don't have to do this.
+	\item \textbf{Economy}:Again, it is easier to create threads because they already 
+		share the space of the parent's and don't need another memory space, loading,
+		and separate executing.
+	\item \textbf{Scalability}: The benefits of multithreading might be even greater
+		in a multi-threaded system.
+\end{itemize}
+
+When the olden days only had only one core, then multithreading only meant
+interleaving execution of different threads. However, with mutlicores we can have 
+one thread assigned to one core.
+
+\footnote{\textbf{Amdahl's Law} measures the amount of performance gain we could obtain from 
+doing things serially and concurrently. Let $S$ be the percentage performed serially. The 
+possible speedup we could receive from concurrency is 
+\[\textrm{speedup}\leq \frac{1}{S - \frac{1 - S}{N}}\]
+where $N$ is the number of processing cores.
+}
+
+\subsection{Parallelism}
+We mentioned that \textbf{parallelism} refers to doing tasks at the same time,
+maybe on different cores. \textbf{Data Parallelism} refers to using a subset of the
+same data across two different cores, and doing the same operation on both cores. 
+This would be like summing the elements an array, and splitting the array in two 
+for the calculation to be performed on the two cores. Data parallelism has to 
+involve the same operation on the subset of data, so it's kind of like splitting 
+a data set in two.
+
+\textbf{Task Parallelism} involves splitting into a different operation, rather than
+performing the same one on two cores. We can use the same data across the two cores,
+i.e. use the same array, but both tasks are something different. If we perform the 
+summation and get the product of the array elements in parallel, this would be 
+task parallelism.
+
+\section{Multithreading Models} We covered the advantages of threads being that a program can exeucte its code across various
+cores. However, there are two different types of threads: the \textbf{user thread} and 
+\textbf{kernel thread}. The user threads are implemented by the user program and are not 
+managed directly by the kernel, instead there might be a specific libraray that manages them. 
+\footnote{I guess this is more like an abstraction of the threads for the user?} Thus it is 
+the task of the programmer to implement different threads.
+
+Even if they're not managed by the kernel, user threads still have to interact with the 
+kernel threads. How do we find a mapping between the two? There are two approaches:
+\textbf{one-to-many} and \textbf{one-to-one}. The former has a single kernel thread take care
+of multiple user threads. This is not so efficient; however, since those threads can't be 
+run simultaneously. This is why this model is not so used nowadays.
+
+The \textbf{one-to-one} model maps only one user thread for every kernel thread. This model
+does allow for simultaneous execution of different threads, but creating multiple kernel
+threads can slow down the performance of the system overall.
+
+Finally, the \textbf{many-to-many} model acts as a sort of multiplexer for user and kernel 
+threads, assigning a user thread to one of a set of kernel threads. The number of kernel
+threads might be dependant on system architecture, e.g. number of cores on CPU.
+
+\section{Thread Libraries}
+Threads might be implemented differently across systems. Some thread libraries might not 
+invoke system calls and is implemented in code entirely. Other libraries might 
+actually call system calls. For example, both Linux and Windows offer kernel-level libraries.
+Java however, depends on the kernel libraries available on the systems.
+
+There are also \textbf{asynchronous} and \textbf{synchronous} threads. The difference
+is that in asynchronous threads both the parent and the child threads can execute 
+simultaneously. In synchronous threading, the parent thread has to wait for the child
+threads to finish executing before it can continue.
+
+To solve some of the issues around designing and maintaining threads, one modern approach
+has been to move the design of it from the programmer to a runtime library or thread 
+library. This is called \textbf{implicit threading}.
+
+In the web browser example, if we just create a spearate thread for every new tab, we would
+probably end up with an unbounded number of processes. We can use a \textbf{thread pool} to 
+limit the number of threads that we can create. The idea is that we have a group of 
+unassigned threads at the beginning, and when a user program has to create one we can submit a
+request to the thread pool, and receive a thread if there are any unassigned ones.
+
+The main idea is to instead of separate threads, we separate tasks, which sometimes can exist
+within a thread and are just able to be executed in parallel.
+At the end of the forking process, we need to integrate the results into our main program,
+which is called \texttt{fork join}.
+
+The \textbf{Grand Central Station} used in macOS and iOS systems essentially assigns threads
+to tasks. It maintains a dispatch queue for all the tasks that need to be assigned. Then,
+it selects a thread from the thread pool to assign a task to. There are two different 
+queues for serial and concurrent queues.
+
+The tasks available to be submitted are different code \textbf{blocks} or closures in Swift.
+
+\subsection{Threading Issues}
+There might be an issue with the \texttt{fork()} system call. If a thread calls this system call,
+the other program wouldn't know how to create either only one or multiple threads. There are
+both options.
+
+Another issue is \textbf{signal handling}. Signals are used in UNIX to handle any event, and 
+they have to be handled in some way. These signals may be such as illegal memory or dividing by 
+zero. Synchronous events are returned to the process that called them, while asynchronous 
+signals can be received by another process. There are signal handlers defined by the 
+kernel, or they could also be defined by the user himself. For multithreaded programs,
+how do we do?
+
+\begin{itemize}
+	\item \textbf{Deliver the signal to the thread to which the signal applies.}
+	\item \textbf{Deliver the signal to every thread in the process}
+	\item \textbf{Do so only to certain threads.}
+	\item \textbf{Assign a specific thread to receive all the signals.}
+\end{itemize}
+
+The correct approach depends on the signal. Synchronous signals should probably be delivered
+to only the thread that causes it, where as other more serious ones should be delivered to 
+all the threads corresponding to a program.
+
+Cancelling a thread is also another important issue. When we want to cancel a thread,
+the issue of its previously allocated resources remains. What should we do with those 
+resources? We could use \textbf{asynchronous cancellation}, where the thread is 
+terminated immediately. The \textbf{deferred cancellation} approach rather uses 
+a flag which is set whenever the user requests to cancel the thread. This 
+thread is then cancelled whenever it is deemed safe to do so, maybe not immediately.
+The threads themselves might set some flags on or off to indicate which cancellation 
+method should be used.
+
+There is also the issue of how to store information that is unique to a certain thread.
+For this, we have a special set of information\footnote{usually \texttt{static}}
+in each thread called \textbf{Thread-Local Storage}. This info exists all along 
+with the thread, and is unique to it.
+
+Threads are usually scheduled to run on top of a data structure called 
+\textbf{Lightweight Process}(LWP). These map on top of a kernel thread, and if the 
+kernel thread locks up or waits for I/O, this LWP will also lock up and allow
+another thread to be scheduled for execution. The \textbf{upcall} is the way
+the kernel communicates with the user thread library, how it delivers messages 
+about what's going on with the execution.
+\end{document}

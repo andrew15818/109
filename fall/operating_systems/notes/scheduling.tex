@@ -1,0 +1,42 @@
+\documentclass{tufte-handout}
+\title{Chapter 5: CPU scheduling}
+\author{Andr\'es Ponce}
+\usepackage{graphicx}
+\graphicspath{ {./img} }
+
+\begin{document}
+\maketitle
+\begin{abstract}
+CPU scheduling refers to the process by which we decide which
+programs to run. One of the most important OS functions is scheduling
+programs, so allocating one of the most important system resources
+is a challenging task. 
+\end{abstract}
+
+\section{Idea}
+The CPU works in what are called \textbf{bursts}. Bursts are a short period of time
+where the CPU is executing a certain type of function. The CPU usually works with 
+\textbf{CPU bursts}, followed by \textbf{I/O bursts}. Usually program execution alternates
+between the two.
+
+When does scheduling take place? Depends on the OS. There are usually four conditions where
+that happens:
+\begin{itemize}
+	\item When the state of the program changes from running state to waiting.
+	\footnote{Maybe b/c of I/O or a child process running.}
+	\item When the process goes from running state to ready state(e.g. when interrupt occurs).
+	\item When the process goes from waiting state to ready state(e.g. I/O completion.)
+	\item Process termination.
+\end{itemize}
+
+When the first or the fourth condition occurs, we say the scheduling is \textbf{non-preemptive},
+since essentially the OS waits for the program to either terminate or to be idle to perform 
+a context switch. The other conditions cause what is called \textbf{preemptive} scheduling. 
+This means the program can be in the middle of execution when it is rescheduled and another
+program is loaded.
+
+This can result in \textbf{race conditions}, for example if the data is required by two
+programs, and gets changed during execution.
+
+
+\end{document}
