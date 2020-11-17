@@ -1,0 +1,78 @@
+\documentclass{tufte-handout}
+\usepackage{graphicx}
+\usepackage{listings}
+\graphicspath{ {./img} }
+\title{Synchronzation Examples}
+\author{Andr\'es Ponce}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+
+There are some other problems with synchronization, sucha as the critical section problem
+already discussed.
+\end{abstract}
+
+Remember that we had discussed \textbf{semaphores}, which were either binary or integer 
+variables used to indicate the availability of a critical section and whether a process could
+access such critical section. In reality, those could all act as a mutex lock rather than a 
+strict binary semaphore.
+
+\subsection{Bounded Buffers Problem}
+Remember this problem refers to the change of some variable by two different processes.
+
+The essence of this problem is that we have a \textbf{consumer} and a \textbf{producer}.
+The former program is in charge of producing content to go into one of $n$ buffers.
+\begin{lstlisting}
+int n;
+semaphore mutex = 1;
+semaphore empty = n;
+semaphore full = 0;
+\end{lstlisting}
+
+The two processes share the above data structures. The problem lies in how to coordinate
+them so that no data is lost or copied. We should thus avoid having the producer 
+write to the buffer when it is full, and we should also avoid having the consumer
+consume from an empty buffer.
+
+\subsection{Readers-Writers Problem}
+This problem can be illustrated with a database. If multiple processes want to read 
+from the database, then there is no issue, these are the \textbf{reader} programs.
+\textbf{Writer} programs might take a look at the database and try to change some of 
+the values in it. As many reader programs can read the database without any issue, 
+but when there is a writer program involved then we need to be careful. When a program 
+writes to the database, we need it to have exclusive access to the database.
+
+There are two variations of this problem: one where we allow readers to read 
+concurrently, and exclude one of the writers programs. Another solution is to give
+priority to the writer programs so that they write as soon as possible. Both of these
+solutions result in some amount of starvation, in the first case the writer is left
+without access and in the second one the reader is left without access.
+
+A solution might be to keep a \texttt{rw_mutex} semaphore, which both readers and 
+writers have to acquire to change the contents of the database. Multiple readers can
+access this lock, but only one writer program at a time may access it. This approach might
+be useful in situations where there are more readers than writers, since it would minimize
+the amount of writers starved and maximize the concurrent readers accessing the data.
+
+\subsection{Dining Philosophers Problem}
+Multiple philosophers gathered around a dinner table want to access the bowl of rice.
+When a philosopher wants to eat rice, she grabs the chopstick and starts eating. 
+A philospher has to grab one chopstick to each of her sides, so she has to wait until
+the philosopher near to her have put down the chopstick before eating. 
+
+The problem here is how do we allocate finite resources among various competing processes
+without deadlock.
+
+The \textbf{semaphore} solution involves representing each chopsitck (the contested resource)
+, with a semaphore. Thus, when a philosopher wants to pick up her chopstick, it waits
+for the other one to become available. However, this could result in all chopsticks being
+picked up at the same time and thus being unavailable. If all philosophers grabbed their
+left chopstick at once, then all would starve, since they would all infiintely wait
+for the other chopstick to become available. We could limit the number of philosophers
+that are available to eat, or ensure that a philosopher only picks up chopsticks
+when they're both available.
+
+The \textbf{monitor} solution presents a deadlock-free solution but only if we pick 
+up the chopsticks if both are available.
+\end{document}
