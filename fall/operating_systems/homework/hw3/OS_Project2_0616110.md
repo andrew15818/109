@@ -141,3 +141,70 @@ directly with the kernel. In this assignment, we used `printk()`, which is defin
 `linux/syscalls.h` refers to the kernel interface which allows us to directly call systemcalls.
 When we call a systemcall, we specify the numeric id of each one and also supply any required
 parameters.
+
+## Screenshot Discussion
+
+![EchoTest folder contents](img/1.FileFolderContents.PNG){width=60%}
+
+For the first part of our project, we have to define our own systemcall.
+The `syscalltest_helloworld` and `syscalltest_echo` system calls are defined
+in the `echoTest.c` file. This file contains the `SYSCALL_DEFINE` directive, 
+which when compiled will expand the function into a proper C-style 
+function. At compile-time, these directives get expanded into proper syntax.
+The `printk()` function will print messages to the kernel ring buffer, rather than
+to stdout as does `printf()`
+
+![System call table before adding our own functions](img/2.syscall\_64_before.PNG){width=60%}
+
+![System call table after adding our own functions](img/3.syscall\_64_after.PNG){width=60%}
+
+The `syscall_64.tbl` file contains the list of all the different system call functions 
+that are 64 bit. Thus to add our own system calls, we also have to add them to the 
+list of already existing system call functions. The two images above show the file's
+contents before and after adding the system calls. Since the system calls are quite 
+long, they have to wrap to the next line. We add the system calls at the very end 
+of the system calls with the `common` description. In my case, that corresponded 
+to call number 548 and 549.
+
+![`syscalls.h` function signature](img/4.syscalls\_h.PNG){width=60%}
+
+The final step before compiling the kernel is to define the functions in the system 
+header file. This allows us to call the system calls from user programs by including
+the `linux/syscalls.h` file. In the C language, this gives us the ability to call all 
+the functions in that file. Thus in the `echoTest.c` file we can use the 
+`systemcall(num)` function to call the system call with the corresponding id.
+
+![The kernel ring buffer output viewed using `dmesg`.](img/5.dmesg.PNG)
+
+After compiling the kernel, the kernel has already been compiled with our system 
+calls included. This means that we can now call our own system calls just like how 
+we would any other from the kernel. We can use `printk()` to log some messages to the
+kernel ring buffer for debugging purposes if we are a developer (or to check our progress
+in an assignment if we are a student). The kernel ring buffer contains the debug output
+of many different system calls, however it is dumped after it is full.
+
+![Our own user-defined system calls.](img/6.custom_syscalls.PNG){width=60%}
+
+To define our own sytem calls, we need to use a specific syntax. The version of 
+`SYSCALL_DEFINE[n]` we will use depends on the number of arguments to our system call.
+Also, we have to separate the arguments by a parenthesis from the name. Thus, for example
+if our call takes an `int studentId` as parameter, we would write this as `int, studentId`.
+In the above image, we have four user defined functions:
+
+- **syscalltest_returnIndividualValues**: Takes as an input our studentId and two 
+numbers *a* and *b*. This function merely prints them out to the kernel ring buffer 
+and returns a 0.
+
+- **syscalltest_addition**: This system call again takes three arguments,`studentId`, 
+`a` and `b`. We print out our studentId to the kernel ring buffer, and then we 
+print the sum of the other two integer arguments we provided. Thus in the kernel 
+ring buffer we should see a message that contains four values.
+
+- **syscalltest_multiplication**: This function is similar to the addition system call.
+We provide our studentId, and two integer parameters. The system call will then print
+out the values of the numbers and will also print out their product.
+
+- **syscalltest_dataTypes**: This system call will only take our studentId as an argument.
+Then, it will print out the sizes of many different types of data in C. So, in the
+kernel ring buffer we should expect to see several lines with the size in bytes of
+these different data types in C.
