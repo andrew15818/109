@@ -15,6 +15,10 @@ class EdgeDetector:
         pass
     # Check if a pixel location is out of bounds
        # Given a mask, apply that mask on the given pixel as center
+    def get_greyscale(self, image):
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)       
+        return image
+
     def apply_mask_3x3(self, image, mask, row, col, factor=1):
         max_row, max_col = image.shape[0], image.shape[1]
 
@@ -77,42 +81,31 @@ class EdgeDetector:
         print('The filter did not match any. Please try again.') 
         return None
 
-    # Make a copy of the image and return the copy. Otherwise the image will just be dark all around
-    def first_derivative(self, image):
-        print('Opening the image in greyscale')
+    # 
+    def apply_rgb_mask(self, image, mask):
         max_rows = image.shape[0] 
         max_cols = image.shape[1]
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        
         image2 = image.copy()
         print(image.shape)
-        mask = [[-1, 0, 1],
-                [-1, 0, 1],
-                [-1, 0, 1]] 
+        for row in range(image.shape[0]):
+            for col in range(image.shape[1]):
+                
+                tmp = self.apply_mask_3x3(image, mask, row, col, factor=3) 
+                image2[row][col] = tmp 
 
+        return image 
+    # Make a copy of the image and return the copy. Otherwise the image will just be dark all around
+    def apply_greyscale_mask(self, image, mask): 
+        max_rows = image.shape[0] 
+        max_cols = image.shape[1]
+        
+        image2 = image.copy()
+        print(image.shape)
         for row in range(image.shape[0]):
             for col in range(image.shape[1]):
                 
                 tmp = self.apply_mask_greyscale(image, mask, row, col, factor=(1/3)) 
-                image2[row][col] = tmp
-                ''' 
-                sum = 0
-                sum += (image[row-1][col-1] *   mask[0][0] if is_valid(row-1, col-1, max_rows, max_cols) else 0)
-                sum += (image[row-1][col] *     mask[0][1] if is_valid(row-1, col, max_rows, max_cols) else 0)
-                sum += (image[row-1][col+1] *   mask[0][2] if is_valid(row-1, col+1, max_rows, max_cols) else 0)
-                sum += (image[row][col-1] *     mask[1][0] if is_valid(row, col-1, max_rows, max_cols) else 0)
-                sum += (image[row][col] *       mask[1][1] if is_valid(row, col, max_rows, max_cols) else 0)
-                sum += (image[row][col+1] *     mask[1][2] if is_valid(row, col+1, max_rows, max_cols) else 0)
-                sum += (image[row+1][col-1] *   mask[2][0] if is_valid(row+1, col-1, max_rows, max_cols) else 0)
-                sum += (image[row+1][col] *     mask[2][1] if is_valid(row+1, col, max_rows, max_cols) else 0)
-                sum += (image[row+1][col+1] *   mask[2][2] if is_valid(row+1, col+1, max_rows, max_cols) else 0)
-                sum *= (1/3)
-                
-                image[row][col] = sum
-                '''
+                image2[row][col] = tmp 
 
-
-        return image
-        
-        
-    def second_derivative(self, image):
-        pass
+        return image 
