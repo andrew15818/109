@@ -141,12 +141,163 @@ the permissions we can use.
 7. **What happens if the initialization function of the module returns -1? What type of
 error do you get?**
 
+This error means that the module was not able to be initialized. Normally, the function
+will return 0 in case that the module terminates normally. Maybe there was an error in 
+the format of the function or the module was already loaded and thus the initialization
+function cannot run.
 
-
-8. **In section 1.3 - step 6, `modinfo` hsows the information of some variables inside the 
+8. **In section 1.3 - step 6, `modinfo` shows the information of some variables inside the 
 module but two of them are not displayed. Why is it?**
 
+In the `paramsModule.c` file, the `initialize()` function runs as soon as we load the 
+module. Inside this function, we print out the values of the module, and we only 
+print out some of the kernel module values. The reason we don't see all the variables
+in the debug buffer is because those values are not print out when our module
+initializes.
 
 9. **What is the `/sys/module` folder for?**
 
+The `/sys/module` folder stores the information regarding all the currently loaded 
+kernel modules. Inside the folder of each kernel module, we can find the current
+values used by the module. We can read and change the values, if we have the correct
+permissions. For the `paramsModule02` and `calculatorModule`, we are mostly interested
+in the parameter values which the module stores in the 
+`/sys/module/$(module name)/$(parameter name)`.
+
 10. **In section 1.3 (`paramsModule.c`), the variable `charparameter` is of type `charp`. What is `charp`?**
+
+`charp` in the module parameter declaration refers to a `char *`, or a pointer to a 
+`char`. The macros used by the Linux kernel to check the validity of the parameters
+will eventually expand the value to a `char` pointer, which in C functions as a string.
+
+# Screenshot discussion
+
+![Files associated with helloModule.](img/1.Files.PNG){scale=40%}
+
+The first module we created in the project involves just printing
+a value to the kernel ring buffer when we load and remove the kernel
+module. The `initialize` function will execute whenever the kernel 
+module is loaded and the `clean_exit` function will be executed 
+when the module is removed.
+
+The `Makefile` on the top right corner specifies the rules for how 
+to build and compile the files. The first line specifies that the  
+target file is in module form. The `all` and `clean` are different
+rules for where and how to compile certain files.
+
+![The output of the `make` command.](img/2.Make.PNG){scale=50%}
+
+As specified previously, the `make` command specifies how the project or certain 
+files are to be compiled. When the command is run in the command line, this is the 
+output. In the output we see that the make program uses the 
+`/usr/src/linux-4.19.148` directory to make the kernel module
+file, `helloModule.ko`. Afterwards this resulting file will be the 
+one that we load into the kernel.
+
+![Message printed on the kernel ring buffer when we load the module.](img/3.KernelLoaded.PNG){scale=30%}
+
+In the `helloModule.c` file, we have a procedure specified when we initialize the 
+module and when we remove the module. These functions get bound in the `module_init()`
+and `module_exit()` function calls, to which we pass the function. The output in the
+screenshot is the output after the `initialize` function has been called.
+
+![Checking that our module is loaded with the `lsmod` command.](img/4.Lsmod.PNG){scale=60%}
+
+While our module is loaded from the previous step, we use the `lsmod` to list all the
+currently loaded kernel modules. We pipe this ouptut to the `grep` command which will
+look for the name of our module. We do this to check if the module has been loaded.
+
+![Unloading helloModule.](img/5.UnloadingKernel.PNG){scale=50%}
+
+When we unload `helloModule`, we will see the state of the module parameters. In 
+the future excercises we will change the values of the parameters in between the 
+time of loading and unloading. Here, the code inside the `clean_exit()` function 
+is executed. 
+
+![Verifying that the module is unloaded.](img/6.NoKernel.PNG){scale=60%}
+
+In a previous screenshot, we searched for the loaded kernel module among the output
+of `lsmod`. Here we repeat the same command after using the `rmmod` command to remove
+the module. The `lsmod | grep` command returns nothing since `helloModule` has already 
+been unloaded.
+
+![The `paramsModule` and its Makefile.](img/7.TwoFiles.PNG){scale=40%}
+
+The next kernel module we designed involved passing parameters to the module.
+In `paramsModule02.c` , the lines with the `module_param()` function
+will add a parameter of a certain type to the module. If we have 
+the modifyValues parameter toggled, then we will change some of the 
+other parameters. We can toggle this value from the command line
+or dynamically from another file.
+
+![Module parameters printed when loaded and removed.](img/8.LoadParamsModule.PNG){scale=60%}
+
+In terminal 1, we load and remove the module using the `insmod` and `rmmod`
+commands. This causes the module to execute the functions we specified in the 
+`module_init()` and `module_exit()` functions. Thus the parameters are printed
+in the kernel ring buffer. In this step, we have not changed any of the 
+parameters, so the values in the exit method will be the same as the ones
+in the input. Unless we specify the `modifyValues` parameter, we won't change
+their values..
+
+![Getting information about the module with the `modinfo` command.](img/9.Step7.PNG){scale=60%}
+
+![Changing some of the parameters by toggling `modifyValues`](img/10.Step8.PNG){scale=60%}
+
+In the first screenshot, we first print the module information, such as the 
+parameter names, their types, and a short description. Next, we load the module
+again, except this time when we load the module we use the command
+
+```shell
+sudo insmod paramsModule.ko modifyValues=1
+```
+
+which will cause the values of some of the parameters. Our code will check this 
+value and change some of the parameters in accordance with the code.
+
+The next screenshot shows the values after they are changed. The `modifyValues`
+parameter will replace the studentId and message with some dummy values,
+which then get printed to the kernel ring buffer.
+
+![Loading the module again with our own custom parameters.](img/11.Step9.PNG)
+
+![The parameter's value written in the correct file.](img/12.Step10.PNG)
+
+![The value we updated in the parameter file shows once we remove the module.](img/13.Step11.PNG){scale=60%}
+
+In the previous section, we had changed some parameters of our module from 
+within the module file. The first screenshot shows how we can change the 
+parameters of the file directly from the command line. The module is then 
+loaded with those parameters and we can thus see it on the kernel ring buffer.
+
+The kernel keeps track of the module paramter's values inside of a file. 
+Originally, the secret value was 8888 but we can change it by going into the 
+file and just replacing the old value with 7777. When we remove the module, 
+we should see the updated value being printed on the kernel ring buffer.
+
+The last screenshot is again the values of the parameters once we remove the
+module and its exit function is executed. This shows that once we edit 
+the values in the files, the module will use the new values.
+
+![Loading an invalid parameter.](img/14.Step12.PNG){scale=80%}
+
+When we try to change a variable that cannot be changed, we will get a 
+message in the kernel ring buffer that displays a message saying 
+we cannot change that value. The reason that this parameter is not 
+recognized is that we did not add it to the list of parameters. So, even though
+`dummyStudentId` is a variable inside our file, it is seen as a local variable
+rather than a valid module parameter.
+
+![Code responsible for loading and unloading the module.](img/15.LoaderUnloader.PNG)
+
+![The functions that run on loading and removing the module, respectively.](img/16.ParamsModule02.PNG)
+
+The first creates the image for reading the module. We then pass it to the 
+`init_module()` macro, which will attempt to load the module with
+the parameters passed in the `paramsNew` string. We also have to allocate 
+some memory space for the memory image.
+
+The next image shows the two methods we run on loading and removing the modules.
+The last two lines, `module_init(initialize)` and `module_exit(clean_exit)` 
+are bound to the module, so these functions will execute on module loading 
+and removing, respectively.
