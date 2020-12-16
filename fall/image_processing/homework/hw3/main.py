@@ -1,6 +1,6 @@
 from compressor import Compressor
 import argparse
-filename = "img/screen.jpg"
+filename = "img/me_bro.jpeg"
 
 def make_args():
     parser = argparse.ArgumentParser()

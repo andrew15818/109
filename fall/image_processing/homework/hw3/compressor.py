@@ -14,4 +14,8 @@ class Compressor:
         method = method.lower()
         if method == "huffman":
             huff = Huffman(self.filename)
-        pass
+            compressed = huff.encode()
+            decompressed = huff.decode(compressed)
+            print(decompressed.size)
+            cv2.imshow('decom', decompressed)
+            cv2.waitKey(0)
