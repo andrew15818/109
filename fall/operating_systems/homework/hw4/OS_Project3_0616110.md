@@ -10,7 +10,9 @@ titlepage-background: "background.pdf"
 ---
 
 ## Video Link
-[TBD]()
+[Click here](https://youtu.be/r1w03z_QpR4)
+
+If it doesn't work here is the link: https://youtu.be/r1w03z\_QpR4
 
 # Questions
 1. **What is a static kernel module? What is a dynamic kernel module? What is the other
@@ -301,3 +303,69 @@ The next image shows the two methods we run on loading and removing the modules.
 The last two lines, `module_init(initialize)` and `module_exit(clean_exit)` 
 are bound to the module, so these functions will execute on module loading 
 and removing, respectively.
+
+![Compiling the `loaderUnloader` module.](img/17.Compiling.PNG){scale=60%}
+
+![Dmesg output after we load the module](img/18.dmesg.PNG){scale=60%}
+
+![Checking that we loaded the module](img/19.\ CheckingModule.PNG){scale=60%}
+
+![`dmesg` Values once we unload the module](img/20.UnloadingModule.PNG){scale=60%}
+
+Once we are done with writing the module code, we have to compile the program that loads
+and unloads the module. `loaderUnloader.c` contains the calls necessary to load the 
+module and give it the parameters we need.
+
+We then load the module with our student Id as parameter, which is displayed in the 
+kernel ring buffer once we call `dmesg -wH`. There are also the secret value and 
+the string inside the module which we print to the kernel.
+
+So far we have compiled our module, loaded it to the kernel, and we saw the result of the
+`initialize()` function being printed to the ring buffer. To indeed check whether 
+paramsModule, or any other module, is loaded, we can run the `lsmod` command in 
+combination with `grep` to check whether the module is loaded.
+
+Lastly, we unload the module when we allow `loaderUnloader` to finish executing. The 
+second part of the program will unload the module and again print the values to the
+kernel ring buffer.
+
+![stdout when we load the calculator module.](img/21.ModuleOutput.PNG){scale=60%}
+
+![Kernel ring buffer when we pass our own parameters to our module.](img/22.Dmesg.PNG){scale=60%}
+
+![How we handle the parameter calculation.](img/23.Functions.PNG){scale=60%}
+
+![Actual code implementing the arithmetic operation.](img/24.CalculatorModule.PNG){scale=60%}
+
+For the last part of the assignment, we had to write our own module which took in
+some parameters and called the module to perform some arithmetic operation. The final
+output on the terminal is shown in the first image, where we try out all the three
+operations along with two numbers. Before the module is loaded, the name of the 
+module and the final string are shown on screen.
+
+For the second screenshot, we show the dmesg output once we load the module. Here
+we essentially just print out the values that were passed on to the module at load time,
+and we see some of the initialization and unloading. 
+
+The third screenshot shows the structure of the `addition`, `subtraction`, and 
+ `multiplication` functions. The most important part is having a string which 
+contains the name of the operation and the two arguments, each parameter separated by 
+a space. Inside the `prepare_args()` function, we use the `snprintf()` C function to 
+format the string accordingly. We then copy the string into the `args` buffer and return 
+the string ready for use.  The `apply_module()` function will mostly replicate the code
+for loading and unloading the module used for `paramsModule()`, with a couple 
+important additions:
+
+1. It will pass along our string as a parameter when calling `init_module` (also used in
+`paramsModule`).
+2. It will return the arithmetic result of the operation after reading it from the 
+parameter file.
+\footnote{This parameter is found in `/sys/module/calculatorModule/parameters/resultParam`.}
+
+The last screenshot shows the actual code responsible for the arithmetic operations in
+`calculatorModule.c`. At the moment we load the modules, the parameters will already 
+be set to the values we need them at. Therefore, in the `initialize()` method all we 
+need to do is just perform the correct arithmetic operation based on the value of the
+`operationParam` string, which we determine with `strcmp`.
+
+
