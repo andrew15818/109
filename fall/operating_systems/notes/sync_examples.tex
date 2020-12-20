@@ -49,7 +49,7 @@ priority to the writer programs so that they write as soon as possible. Both of 
 solutions result in some amount of starvation, in the first case the writer is left
 without access and in the second one the reader is left without access.
 
-A solution might be to keep a \texttt{rw_mutex} semaphore, which both readers and 
+A solution might be to keep a \texttt{rw\_mutex} semaphore, which both readers and 
 writers have to acquire to change the contents of the database. Multiple readers can
 access this lock, but only one writer program at a time may access it. This approach might
 be useful in situations where there are more readers than writers, since it would minimize
@@ -75,4 +75,58 @@ when they're both available.
 
 The \textbf{monitor} solution presents a deadlock-free solution but only if we pick 
 up the chopsticks if both are available.
+\section{Synchronization within the Kernel}
+
+\subsection{Synching in Windows}
+Windows provdes a spinlock solution when there is some thread waiting to access
+a global resource. THis is becuase spinlocks might be more efficient for smaller 
+code segments.\footnote{Remember in a spinlock, the waiting program loops until
+it can access the critical section.}
+
+In Linux, we can use synchronization by performing some atomic operations. This means
+that during these sorts of operations the processes will not be pre-empted and 
+interruped by other processes. However, this is mostly seen in counters. More 
+sophisticated locking mechanisms might be required for other scenarios.j
+
+\section{POSIX Synchronization}
+The POSIX standard uses mutex locks, semaphores, and events to protect ciritical 
+sections of code. Semaphores are just some binary variables that indicate the 
+tatus of some resource.
+
+Pthreads are the main way for the POSIX standard by which we use semaphores.
+Since we use mutex locks in C to acquire the right to modify the data in some 
+programs, we usually associate some conditions with it. These conditions
+are called condition variables. If the condition is not true, we can place the
+variable in a loop and check it periodically.
+
+\section{Alternative Approaches}
+Recently there has been an increasing need for mutli-threaded applications but 
+designing such applications that are entirely free from race conditions remains
+a tad hard.
+
+\subsection{Transactional Memory}
+Coming straight from database design, there is an approach to memory called 
+\textbf{transactional memory}. A transaction is a sequence of atomic operations 
+that are made and then committed once they are completed. Since operations 
+on memory are made atomically, then there cannot be any deadlock.
+
+In this approach, the TM system will automatically take care of seeing which 
+oeprations can be handled concurrently, such as multiple read operations.
+It is then on the hardware implementation to find how to properly schedule 
+threads so that there is no collision.
+
+\subsection{OpenMP}
+Recall that OpenMP is a library where we can schedule things to run concurrently. 
+We can specify some compiler directives a piece of code that is to be executed
+by a number of parallel threads. The \texttt{\#pragma omp critical} directive 
+indicates that the following piece of code is to be only executed by a single thread.
+This is to inform the rest of the system to only allow one thread to execute 
+at the same time. This directive then functions more or less like a mutex lock,
+so it would still be up to the programmer to handle possible race conditions.
+
+\subsection{Functional Programming Languages}
+Imperative languages such as C, Java, and Python are so becuase they maintain 
+a  state of all variables and so during sequential execution of instructions,
+the order of the instructions is crucial.
+
 \end{document}
