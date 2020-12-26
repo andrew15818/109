@@ -1,0 +1,73 @@
+\documentclass[12pt, a4paper]{article}
+% including images
+\usepackage{graphicx}
+\usepackage[margin=1in]{geometry}
+\graphicspath{ {./figs/} }
+
+% For indent after new heading 
+\usepackage{indentfirst}
+
+% citations
+\usepackage{biblatex}
+% Chinese typesetting
+\usepackage{xeCJK}
+\setCJKmainfont{WenQuanYi Micro Hei Mono}
+\usepackage{setspace}
+
+\begin{document}
+\newcommand{\largeTitle}[1]{\fontsize{40}{50} #1}
+
+%---------- TITLE PAGE ---------- 
+% TODO: Fix the fonts to make it more professional
+\begin{titlepage}
+		\begin{center}
+			\largeTitle \textbf{國立交通大學} \\[0.25cm]
+			\largeTitle \textbf{資訊工程學系} \\[0.25cm]
+
+			\LARGE{Lo mismo en chino} \\[0.5cm]
+
+			\LARGE{Intelligent Image Processing for Aerial 2-D Image Stitching}
+		\end{center}
+
+		\vspace{\fill}
+		% bottom half of title page
+		% TODO: This looks quite weird
+		\begin{tabular}{c l}
+			{\makebox[8em][s]{\LARGE 大學生}} & \LARGE Andr\'es Ponce 彭思安 \\[0.5cm]
+			{\makebox[8em][s]{\LARGE 指導教授}} & \LARGE Maria Yuang 楊啟瑞 \\[0.5cm]
+		\end{tabular}
+
+		\vspace{3cm}
+		% TITLE PAGE FOOTER
+		\begin{center}
+			{\LARGE 中華民國 109 年 12 月 27日}
+		\end{center}
+\end{titlepage}
+
+% ---------- ABSTRACT ----------
+\begin{titlepage}
+	\begin{center}
+		\LARGE
+		\begin{singlespace}
+			\textbf{Intelligent Image Processing for Aerial 2-D Image Stitching}
+		\end{singlespace}
+
+		\begin{singlespace}
+			\begin{tabular}{r l}
+					Student &: 彭思安 \\
+					Advisor &: Dr. Maria Yuang \\[0.5cm]
+			\end{tabular}
+		\end{singlespace}
+
+		\begin{singlespace}
+				Department of Computer Science\\[0.5cm]
+		\end{singlespace}
+		\textbf{ABSTRACT} \\[0.5cm]
+
+	\end{center}
+	\normalsize
+		\hspace{0.6cm} \\[0.7cm]
+\end{titlepage}
+
+\end{document}
+

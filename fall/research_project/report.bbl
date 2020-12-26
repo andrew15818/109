@@ -1,0 +1,160 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.1 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global}
+    \entry{Panorama}{online}{}
+      \list{publisher}{1}{%
+        {Encyclopedia Britannica}%
+      }
+      \field{sortinit}{1}
+      \field{sortinithash}{50c6687d7fc80f50136d75228e3c59ba}
+      \field{labeltitlesource}{title}
+      \field{day}{22}
+      \field{month}{3}
+      \field{title}{Panorama}
+      \field{year}{2018}
+      \field{dateera}{ce}
+      \verb{urlraw}
+      \verb https://www.britannica.com/art/panorama-visual-arts
+      \endverb
+      \verb{url}
+      \verb https://www.britannica.com/art/panorama-visual-arts
+      \endverb
+    \endentry
+    \entry{OhioStitching}{online}{}
+      \name{author}{1}{}{%
+        {{hash=a10ffd2e8f94bf9d0b342d6dc7f73e08}{%
+           family={Connection},
+           familyi={C\bibinitperiod},
+           given={Ohio\bibnamedelima History},
+           giveni={O\bibinitperiod\bibinitdelim H\bibinitperiod}}}%
+      }
+      \strng{namehash}{a10ffd2e8f94bf9d0b342d6dc7f73e08}
+      \strng{fullhash}{a10ffd2e8f94bf9d0b342d6dc7f73e08}
+      \strng{bibnamehash}{a10ffd2e8f94bf9d0b342d6dc7f73e08}
+      \strng{authorbibnamehash}{a10ffd2e8f94bf9d0b342d6dc7f73e08}
+      \strng{authornamehash}{a10ffd2e8f94bf9d0b342d6dc7f73e08}
+      \strng{authorfullhash}{a10ffd2e8f94bf9d0b342d6dc7f73e08}
+      \field{sortinit}{2}
+      \field{sortinithash}{ed39bb39cf854d5250e95b1c1f94f4ed}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Cincinnati Panorama of 1848}
+      \verb{urlraw}
+      \verb https://www.ohiomemory.org/digital/collection/p267401coll36/id/4168
+      \endverb
+      \verb{url}
+      \verb https://www.ohiomemory.org/digital/collection/p267401coll36/id/4168
+      \endverb
+    \endentry
+    \entry{iPhoneStitch}{online}{}
+      \name{author}{1}{}{%
+        {{hash=a29648360e733a21248c2588b987cc17}{%
+           family={Cheredar},
+           familyi={C\bibinitperiod},
+           given={Tom},
+           giveni={T\bibinitperiod}}}%
+      }
+      \strng{namehash}{a29648360e733a21248c2588b987cc17}
+      \strng{fullhash}{a29648360e733a21248c2588b987cc17}
+      \strng{bibnamehash}{a29648360e733a21248c2588b987cc17}
+      \strng{authorbibnamehash}{a29648360e733a21248c2588b987cc17}
+      \strng{authornamehash}{a29648360e733a21248c2588b987cc17}
+      \strng{authorfullhash}{a29648360e733a21248c2588b987cc17}
+      \field{sortinit}{3}
+      \field{sortinithash}{a37a8ef248a93c322189792c34fc68c9}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{The iPhone 5’s badass camera: 40\% faster photo capture, panorama mode, \& more}
+      \field{urlday}{12}
+      \field{urlmonth}{9}
+      \field{urlyear}{2012}
+      \field{year}{2012}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://venturebeat.com/2012/09/12/iphone-5-camera/
+      \endverb
+      \verb{url}
+      \verb https://venturebeat.com/2012/09/12/iphone-5-camera/
+      \endverb
+    \endentry
+    \entry{OpenDroneMapTheMissingGuide}{book}{}
+      \name{author}{1}{}{%
+        {{hash=5d1aa8f7cd8601270bb54fbdc1f19679}{%
+           family={Toffanin},
+           familyi={T\bibinitperiod},
+           given={Piero},
+           giveni={P\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {UAV4GEO}%
+      }
+      \strng{namehash}{5d1aa8f7cd8601270bb54fbdc1f19679}
+      \strng{fullhash}{5d1aa8f7cd8601270bb54fbdc1f19679}
+      \strng{bibnamehash}{5d1aa8f7cd8601270bb54fbdc1f19679}
+      \strng{authorbibnamehash}{5d1aa8f7cd8601270bb54fbdc1f19679}
+      \strng{authornamehash}{5d1aa8f7cd8601270bb54fbdc1f19679}
+      \strng{authorfullhash}{5d1aa8f7cd8601270bb54fbdc1f19679}
+      \field{sortinit}{4}
+      \field{sortinithash}{e071e0bcb44634fab398d68ad04e69f4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{edition}{first}
+      \field{title}{OpenDroneMap: The Missing Guide}
+      \field{year}{2019}
+    \endentry
+    \entry{brown2007automatic}{article}{}
+      \name{author}{2}{}{%
+        {{hash=21ad46459848d632520fb6eb3266095b}{%
+           family={Brown},
+           familyi={B\bibinitperiod},
+           given={Matthew},
+           giveni={M\bibinitperiod}}}%
+        {{hash=83f4643381c1cc2c483b4210498fedb0}{%
+           family={Lowe},
+           familyi={L\bibinitperiod},
+           given={David\bibnamedelima G},
+           giveni={D\bibinitperiod\bibinitdelim G\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Springer}%
+      }
+      \strng{namehash}{2d0c7aab84a4dc22da2f5cc66b9efa5f}
+      \strng{fullhash}{2d0c7aab84a4dc22da2f5cc66b9efa5f}
+      \strng{bibnamehash}{2d0c7aab84a4dc22da2f5cc66b9efa5f}
+      \strng{authorbibnamehash}{2d0c7aab84a4dc22da2f5cc66b9efa5f}
+      \strng{authornamehash}{2d0c7aab84a4dc22da2f5cc66b9efa5f}
+      \strng{authorfullhash}{2d0c7aab84a4dc22da2f5cc66b9efa5f}
+      \field{sortinit}{5}
+      \field{sortinithash}{5dd416adbafacc8226114bc0202d5fdd}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{International journal of computer vision}
+      \field{number}{1}
+      \field{title}{Automatic panoramic image stitching using invariant features}
+      \field{volume}{74}
+      \field{year}{2007}
+      \field{pages}{59\bibrangedash 73}
+      \range{pages}{15}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+
