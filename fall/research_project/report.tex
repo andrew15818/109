@@ -83,8 +83,8 @@ for medical imaging applications.
 		\label{fig:PanoExample}
 		\centering
 		\includegraphics[scale=0.4]{pano.png}
-		\caption{Example of stitched image. However, some visual artifacts might 
-		still remain in the final image.}	
+		\caption{Example of stitched image consisting of six individual images. Some visual 
+		artifacts such as blurring might remain in the final panorama.}
 \end{figure}
 
 \section{Problem Description}
@@ -110,20 +110,113 @@ utilizes this pipeline to stitch multiple images together.
 
 Next is a brief description of the pipeline according to the original paper:
 \begin{enumerate}
-		\item \textbf{Image Matching}: In this stage we find the regions of 
+		\item \textbf{Feature Matching}: In this stage we find the regions of 
 				interest in each image of the sequence. A region of interest,
 				commonly called a feature, could represent an area of the image
 				with large variations in pixel intensities. Once a feature is 
 				found, relevant information about it is stored in a k-d tree.
+				This k-d tree will store the points by their location in the 
+				image, so lookups of physically nearby features can be done 
+				in $O(\log(n))$ time~\cite{IntroToAlgorithms}.
 
+		\item \textbf{Image Matching}: In this stage we find connected sets 
+				of images which will be stitched together. To find appropriate
+				pairs of images, the RANSAC algorithm is used. The algorithm
+				will look at the probability that a certain match was generated
+				by a correct image match.
+
+		\item \textbf{Bundle Adjustment}: In the previous step, matching pairs
+				of images had been calculated based on inlier features. In this 
+				step, the bundle adjuster structure will adjust the camera parameters
+				of each image added. This avoids cumulative errors resulting from the 
+				homography estimation. When each subsequent image is added to the bundle,
+				for each feature the error is calculated from that feature in the other 
+				images. 
+		\item \textbf{Panorama Straightening}: At this point, the image's parameters
+				have been adjusted relative to each other;however in this step the 
+				the global camera is taken into account. Since the sequence of pictures
+				are probably not taken along a perfectly even plane, the null vector of the
+				covariance camera matrix is used to ensure the images are all taken 
+				in a single plane.
+ 
+		\item \textbf{Blending}: Given a panorama picture, the last step involves softening
+				the image edges. This is done by assigning a weight function to the overlapping
+				regions, which depends on their position from the edge of the image. Thus there
+				is a more gradual change in the pixel values from one image to the next.
 
 \end{enumerate}
+
+\begin{figure}
+	\label{fig:PipelineOriginal}
+	\centering
+	\includegraphics[scale=0.6]{pipeline_orig.png}
+	\caption{2-D stitching pipeline based on original paper. The input consists of a set of images and the 
+		output consists of a single, high-resolution image.}
+\end{figure}
+
+Since its publication this pipeline has been implemented in many open source alternatives, such
+as OpenCV and many smaller projects. 
+
+However, recently there have been newer methods that focus on improving certain parts of the pipeline. 
+For example, the SuperGlue pretrained network~\cite{Sarlin_2020_CVPR} utilizes a neural network
+to perform feature matching and image matching. 
+
 \section{Resolution Method}
 \label{sec:ResolutionMethod}
+The current project took the pipeline in Section~\ref{sec:Literature} as a starting point. After
+understanding the pipeline, its inputs and outputs at each step, and some possible ways of 
+implementing it in code, it was clear that some improvements could be made. For our application,
+the main focus was balancing the visual results with the latency. One of the first steps in the
+procedure was timing each step in the pipeline to identify possible areas of improvement.
+
+\textbf{INSERT THE TIMING FIGURE WITH THE ORIGINAL PIPELINE}.
+
+The program used to time the pipeline utilized OpenCV, since it offers variety of the 
+funcitons and algorithms we need to implement the pipeline step by step. Initially, two
+images were tested to determine the specific place where our program spent the longest 
+amount of time. From Figure~\ref{fig:PipelineTiming}, it was clear the 
+feature matching and blending.
+
+This finding prompted a search for methods to improve on the latency of the pipeline for our 
+specific use case. Among them was SuperGlue pretrained network, which uses a neural network
+to perform image matching and feature matching. The reason this project was chosen as a 
+substitute for our original OpenCV implementation was due to its drastic improvement 
+in terms of latency. In our original implementation, all the image processing ocurred at the 
+image's native resolution and in full color. SuperGlue downsized the images to 640x480 resolution
+down from the iamge's native 1920x1080 resolution. Besides the downsampling, the images
+were also turned to greyscale for quicker processing of image data. 
+
+With only some slight changes to the source code, this project was integrated 
+into the rest of the pipeline. 
+Since the rest of our project was based around the OpenCV implementation, the programs output 
+had to be compatible with the  rest of the pipeline. Fortunately, this was not a problem
+since the model's output was of type \texttt{numpy.ndarray} which could easily be turned to
+\texttt{cv2.KeyPoint()} as was needed in the second step of the pipeline.
+
+As a next step, an alternative blending method could also be researched. In the years since,
+there likely is a more efficient way of performing the blending process.
 
 \section{System Design and Implementation}
 \label{sec:DesignAndImplementation}
 
+The technical aspect of the project involved creating the pipeline step by step so that 
+it could handle multiple images at once. Early on, the decision was made to split the
+pipeline into small scripts, each performing one step.  Each script would read some files as 
+inputs, perform its intended step, and write the files to an output directory. This was done
+in order to have a more convenient modification experience. By implementing the pipeline as small
+modules rather than a single script, changing any single step of the pipeline in the future 
+would be easier. This proved to be the case when modifying the original feature matching step with
+SuperGlue. The only concern was to ensure the output followed the same format the next step, 
+image matching, was expecting. 
+
+\begin{figure}
+	\label{fig:tree}
+		\centering
+		\includegraphics[scale=0.4]{dir.png}
+		\caption{Main directory structure. There is a directory for each stage, with 
+		an \texttt{input} and \texttt{output} subdirectories where associated files are 
+		read from and stored to.}
+\end{figure}
 \section{Result Analysis}
 \label{sec:Results}
 

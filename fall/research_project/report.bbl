@@ -154,6 +154,84 @@
       \field{pages}{59\bibrangedash 73}
       \range{pages}{15}
     \endentry
+    \entry{IntroToAlgorithms}{book}{}
+      \name{author}{4}{}{%
+        {{hash=9a4c67d2407675eccd23bc8f86407931}{%
+           family={Cormen},
+           familyi={C\bibinitperiod},
+           given={Thomas},
+           giveni={T\bibinitperiod}}}%
+        {{hash=4170d859c548a9be8431e59182a4d802}{%
+           family={Leiserson},
+           familyi={L\bibinitperiod},
+           given={Charles},
+           giveni={C\bibinitperiod}}}%
+        {{hash=5614cb2ff8306dd22ca98f90f5b096af}{%
+           family={Rivest},
+           familyi={R\bibinitperiod},
+           given={Ronald},
+           giveni={R\bibinitperiod}}}%
+        {{hash=bc78426660400760f77758aec45e71a8}{%
+           family={Stein},
+           familyi={S\bibinitperiod},
+           given={Clifford},
+           giveni={C\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {The MIT Press}%
+      }
+      \strng{namehash}{f0b8970ddc6aa408d46a36ceedbc508d}
+      \strng{fullhash}{11a875f4439ef124c0b9285c6472bbf0}
+      \strng{bibnamehash}{11a875f4439ef124c0b9285c6472bbf0}
+      \strng{authorbibnamehash}{11a875f4439ef124c0b9285c6472bbf0}
+      \strng{authornamehash}{f0b8970ddc6aa408d46a36ceedbc508d}
+      \strng{authorfullhash}{11a875f4439ef124c0b9285c6472bbf0}
+      \field{sortinit}{6}
+      \field{sortinithash}{7851c86048328b027313775d8fbd2131}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{edition}{Third}
+      \field{title}{Introduction to Algorithms}
+      \field{year}{2009}
+    \endentry
+    \entry{Sarlin_2020_CVPR}{inproceedings}{}
+      \name{author}{4}{}{%
+        {{hash=7b552aaf82f71bccf2e8f76e3f71febe}{%
+           family={Sarlin},
+           familyi={S\bibinitperiod},
+           given={Paul-Edouard},
+           giveni={P\bibinithyphendelim E\bibinitperiod}}}%
+        {{hash=5aa08f41f83b353992ab976ddbd72b29}{%
+           family={DeTone},
+           familyi={D\bibinitperiod},
+           given={Daniel},
+           giveni={D\bibinitperiod}}}%
+        {{hash=0a9625c8c40a30f7f81cb003657ffa5d}{%
+           family={Malisiewicz},
+           familyi={M\bibinitperiod},
+           given={Tomasz},
+           giveni={T\bibinitperiod}}}%
+        {{hash=aa04c4d6213a1e867b1650e298cb2668}{%
+           family={Rabinovich},
+           familyi={R\bibinitperiod},
+           given={Andrew},
+           giveni={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{255e9952e7a64c791e6e09f0b5d6c690}
+      \strng{fullhash}{d0969b4a95d802f62d988e13c1233aab}
+      \strng{bibnamehash}{d0969b4a95d802f62d988e13c1233aab}
+      \strng{authorbibnamehash}{d0969b4a95d802f62d988e13c1233aab}
+      \strng{authornamehash}{255e9952e7a64c791e6e09f0b5d6c690}
+      \strng{authorfullhash}{d0969b4a95d802f62d988e13c1233aab}
+      \field{sortinit}{7}
+      \field{sortinithash}{f615fb9c6fba11c6f962fb3fd599810e}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}
+      \field{month}{6}
+      \field{title}{SuperGlue: Learning Feature Matching With Graph Neural Networks}
+      \field{year}{2020}
+    \endentry
   \enddatalist
 \endrefsection
 \endinput
