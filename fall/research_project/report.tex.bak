@@ -24,11 +24,10 @@
 % TODO: Fix the fonts to make it more professional
 \begin{titlepage}
 		\begin{center}
-			\vskip 1.0cm
 			\largeTitle \textbf{國立交通大學} \\[0.25cm]
 			\largeTitle \textbf{資訊工程學系} \\[0.25cm]
 
-			\LARGE{飛行器應用之54智慧2D影像拼接技術} \\[0.5cm]
+			\LARGE{Lo mismo en chino} \\[0.5cm]
 
 			\LARGE{Intelligent Image Processing for Aerial 2-D Image Stitching}
 		\end{center}
@@ -170,17 +169,12 @@ implementing it in code, it was clear that some improvements could be made. For 
 the main focus was balancing the visual results with the latency. One of the first steps in the
 procedure was timing each step in the pipeline to identify possible areas of improvement.
 
-\begin{figure}
-	\centering
-	\label{fig:PipelineTiming_orig}
-	\includegraphics[scale=0.6]{pipelineTiming_orig.png}
-	\caption{Timing diagram of first image stitching pipeline.}
-\end{figure}
+\textbf{INSERT THE TIMING FIGURE WITH THE ORIGINAL PIPELINE}.
 
 The program used to time the pipeline utilized OpenCV, since it offers variety of the 
 funcitons and algorithms we need to implement the pipeline step by step. Initially, two
 images were tested to determine the specific place where our program spent the longest 
-amount of time. From Figure~\ref{fig:PipelineTiming_orig}, it was clear the 
+amount of time. From Figure~\ref{fig:PipelineTiming}, it was clear the 
 feature matching and blending.
 
 This finding prompted a search for methods to improve on the latency of the pipeline for our 
@@ -223,33 +217,13 @@ image matching, was expecting.
 		an \texttt{input} and \texttt{output} subdirectories where associated files are 
 		read from and stored to.}
 \end{figure}
-
 \section{Result Analysis}
 \label{sec:Results}
 
-The timing performance was performed by running the same pair or set of images using both
-methods. First, we just were concerned only with the first step of the pipeline, the
-feature matching stage. The \texttt{input/} folder contains merely the images to be stitched.
-The normal \texttt{main.py} script will utilize the original pipeline design with SIFT to 
-perform feature matching. The \texttt{SuperGlue/} directory contains the software project for
-the alternative neural network method.
-
-\begin{figure}
-	\centering
-	\label{fig:TimingComparison_comp}
-	\includegraphics[scale=0.6]{timing_comp.png}
-	\caption{Timing results for the original SIFT-based feature matching method and the 
-		SuperGlue pretrained network.}
-\end{figure}
-
-Based on Figure~\ref{fig:TimingComparison_comp}, the timing resulted in a faster implementation
-of the feature matching stage.
 \section{Conclusions and Contributions}
 \label{sec:Conclusion}
-
 
 \vspace{\fill}
 
 \printbibliography
 \end{document}
-
