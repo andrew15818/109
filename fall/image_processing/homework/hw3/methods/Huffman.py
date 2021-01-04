@@ -1,6 +1,4 @@
 import cv2
-import matplotlib.pyplot as plt
-import copy
 import numpy as np
 from queue import PriorityQueue
 # number of grey values
@@ -33,9 +31,6 @@ class Huffman:
         self.queue = PriorityQueue()
         self.table = {} # Dictionary for our codes
 
-        # TODO: Figure out how to encode the pixels in the image
-        # using the reduces source symbols
-        # Find the Huffman code for each symbol (store it in dict)
         self._find_frequencies()
         self.root = self._build_tree() 
         self._print_tree(self.root)
@@ -65,13 +60,7 @@ class Huffman:
         for idx, freq in enumerate(self.frequencies):
             node = Node(prob=freq, level=idx)
             self.queue.put((node.prob, node))
-        sumo = 0
-        '''
-        while not self.queue.empty():
-            tmp = self.queue.get()
-            print(f'{tmp[1].prob}')
-            sumo += tmp[1].prob
-        '''
+
     def _make_parent(self, node1, node2):
         left = node1 if node1.prob <= node2.prob else node2
         right = node1 if node1.prob> node2.prob else node2
@@ -102,7 +91,6 @@ class Huffman:
 
     # Given the code, find the corresponding intensity level
     def _retrieve_level(self, symbol):
-        #node = copy.deepcopy(self.root)
         node = self.root
         for bit in symbol:
             if bit == '0':
@@ -125,7 +113,7 @@ class Huffman:
         while self.queue.qsize() > 1:
             left = self.queue.get() 
             right = self.queue.get()
-            #print(f'Comparing {left[1].prob} and {right[1].prob}')
+
             parent = self._make_parent(left[1], right[1])
 
             # Return once we have only the root node 
@@ -147,7 +135,8 @@ class Huffman:
 
     # Take in a deocded image and return the uncompressed version
     def decode(self, encoded):
-        decompressed = np.array((self.gray.size[0], self.gray.size[1])) 
+        enc_size = tuple((len(encoded), len(encoded[1])))
+        decompressed = np.zeros(enc_size)
         for row in range(len(encoded)):
             for col in range(len(encoded[row])):
                 # Retrieve the level corresponding to the symbol

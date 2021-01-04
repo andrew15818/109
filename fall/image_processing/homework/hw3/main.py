@@ -11,6 +11,6 @@ def make_args():
 def main():
     comp = Compressor()
     comp.open(filename)
-    comp.use_method("huffman")
+    comp.use_method("dct")
 if __name__ == "__main__":
     main()
