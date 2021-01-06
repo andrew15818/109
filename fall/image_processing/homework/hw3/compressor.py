@@ -24,4 +24,5 @@ class Compressor:
 
         elif method == "dct": 
             dct = DiscreteCosine(self.filename)
-            dct.apply_transform()
+            transform = dct.apply_transform()
+            print(transform)
