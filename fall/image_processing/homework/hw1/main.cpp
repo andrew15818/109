@@ -11,6 +11,7 @@ int main(int argc, char* argv[]){
 		return 1;
 	}
 	ImageProcessor imgProc;
-
+	std::string filename = argv[1];
+	imgProc.process(filename, "contrast adjustment");	
 	return 0;
 }

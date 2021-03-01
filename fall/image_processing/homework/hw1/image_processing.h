@@ -10,5 +10,11 @@ class ImageProcessor{
 		void contrast_adjustment();
 		void noise_reduction();
 		void color_correction();
+		void calculate_histogram();
+
+	private:
+		std::fstream image; // file object
+		size_t size; 		// file size
+		char* data;			// data array to store binary objects
 };
 #endif

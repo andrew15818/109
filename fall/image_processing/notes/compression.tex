@@ -1,0 +1,105 @@
+\documentclass{tufte-handout}
+%\usepackage[margin=1in]{geometry}
+\begin{document}
+
+\section{Image Compression}
+
+\subsection{Introduction}
+
+If we were to store all the raw data of a single image, say
+(1920x1080x24) bits per frame, then storing a single 2 hour movie at 30
+fps would be prohibitively costly. \textbf{Compression} allows us to
+reduce the space an image takes on a disk. We have a reduction ratio
+\emph{C} which can allow us to reduce the space an image takes.
+
+
+There are a couple of redundancies that we can make sure we use: 1.
+\textbf{Coding redundancy}: We assign a code to a piece of information
+or events. If we use 8 bits to store the intensity, this might be more
+than we need, thus we waste some potential space. 2. \textbf{Spatial and
+Temporal Redundancy}: Since pixels are similar to neighboring pixels,
+and those pixels might not vary that much from frame to frame, we might
+be replicating the values of many pixels that might be similar at the
+same time. 3. \textbf{Irrelevant Information}: If our visual system
+ignores certain pieces of information, then it would be unnecessary to
+store all of them.
+
+\subsection{Coding Redundancy}
+
+We have the probability of a certain intensity value as
+\[p_{r}(r_{k}) = \frac{n_{k}}{MN}\]
+
+which means that out of $MN$ pixels, there is a $p_{r}(r_{k})$ probability of a
+certain intensity value. We can then find the average amount of bits used to 
+represent each value by 
+\[L_{avg} = \sum_{k=0}^{L-1}l(r_{k})p_{r}(r_{k})\]
+
+where $l(r_{k})$ is the number of bits used to represent each value. This equation
+means that the total number of pixels required will be the product of the number of 
+bytes and the probability that each intensity value occurs. The $l$ value 
+represents the code that we use to denote the intensities. Thus, if we can assign
+a shorter code to the intensities that appear more frequently, we can also reduce the 
+amount of space required. 
+
+Another way of reducing space is by using \textbf{run-based encoding}. This type
+of encoding would involve specifying the intensity and how many pixels in a row have
+that intensity\footnote{the \textbf{run}}. Thus, for a 256 pixel row, we could cut that
+down to just one 8-bit code plus the intensity value.
+
+The next question becomes: what is the fewest number of bits needed to represent 
+the information in the image? Shannon's Coding Theorem showed that we can do so 
+in as little as 1.664 bits/pixel.
+
+Since we are removing information from the image, we need a way of quanitfying such
+information. There is \textbf{objective fidelity criteria}, which deals with 
+a mathematical function representing our loss, and \textbf{subjective fidelity 
+criteria}. If we wanted to assign a value to the amount of loss, we could use
+root-mean-square error. Suppose we have and image $f$, and we compress and decompress
+a copy $\hat{f}$.
+\[e(x, y) = \hat{f}(x, y) - f(x, y)\]
+for pixel $x, y$. The total error between the two images would be 
+
+\[\sum_{x=0}^{M-1}\sum_{y=0}^{N-1}[\hat{f}(x, y) - f(x, y)]\], 
+
+or subtract the difference between the ground truth image and our approximation
+for every image.
+
+An \textbf{encoder} is a device that can perform this operation and a \textbf{decoder}
+performs its complement. A device that can perform both is called a \textbf{codec}.
+
+The steps in the encoding process are as follows:
+\begin{enumerate}
+	\item\textbf{Mapping}: Here we reduce the input format $f(x,y)$ to another format
+			that may already reduce the space requirements.
+	\item\textbf{Quantizing}: Would map the output of the previous stage to a less
+			precise but shorter value (if lossless compression is desired we would
+			skip this value).
+	\item\textbf{Symbol Coding}: Here we finally generate the fixed or variable 
+			length code that we will use to represent the value.
+\end{enumerate}
+
+\section{Some Basic Compression Methods}
+\subsection{Huffman Coding}
+Huffman coding has been shows to produce the shortest possible codes of fixed length
+$n$. Suppose we have a set of source symbols. First, we could assign them a code 
+based on their probability of appearing in the image. We first order the symbols in 
+terms of their probability $p_{k}$. We combine the two elements with the lowest 
+probabilities into one compound symbol\footnote{If we consider the nodes as leaves 
+in a binary tree, this step is equivalent to making the nodes siblings to a common 
+parent node.} The probability of this new compound symbol is taken by adding the 
+probabilities of the children symbols. We then repeat this process until we are 
+left only with one node\footnote{This would be our root node}. The effect of this
+procedure is that the traversal lengths to the symbols with highest probability are 
+shortest since they will end up closest to the root, and likewise symbols with the 
+lowest frequency are the farthest away from the root. 
+
+When traversing the tree, every time we take a left node, we add a 0 to the 
+resulting code or a 1, and so $l_{k}$ will be related to the distnace from the root 
+node.
+
+\subsection{Arithmetic Coding}
+In this coding scheme, we assign a code to a group of source symbols at once. We assign
+each arithmetic code word an interval between 0 and 1. We then have to subexpand the 
+interval between the first symbol, and find the probabilities inside that.
+
+\end{document}

@@ -1,6 +1,6 @@
 from compressor import Compressor
 import argparse
-filename = "img/me_bro.jpeg"
+filename = "img/p1im4.png"
 
 def make_args():
     parser = argparse.ArgumentParser()
@@ -11,6 +11,6 @@ def make_args():
 def main():
     comp = Compressor()
     comp.open(filename)
-    comp.use_method("dct")
+    comp.use_method("Huffman")
 if __name__ == "__main__":
     main()

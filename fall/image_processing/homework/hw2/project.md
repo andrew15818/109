@@ -51,3 +51,11 @@ In this image we can see some of the leaves marked with a different color than t
 rest of the body. This is our clue that this area, along with the animal's belly, 
 can be separated from the majority of the rest of the image.
 
+## Screenshots
+![Main program](p1.png){width=60%}
+
+![Edge Detector class construction with many of our functionality](p2.png){width=60%}
+
+![Functions for applying masks to different kinds of images.](p3.png){width=60%}
+
+![Final filters applied](p4.png){width=60%}
