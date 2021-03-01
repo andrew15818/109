@@ -37,14 +37,14 @@
 		% bottom half of title page
 		% TODO: This looks quite weird
 		\begin{tabular}{c l}
-			{\makebox[8em][s]{\LARGE 大學生}} & \LARGE Andr\'es Ponce 彭思安 \\[0.5cm]
-			{\makebox[8em][s]{\LARGE 指導教授}} & \LARGE Maria Yuang 楊啟瑞 \\[0.5cm]
+				{\makebox[8em][s]{\LARGE 大學生:}} & \LARGE 彭思安(0616110) \\[0.5cm]
+			{\makebox[8em][s]{\LARGE 指導教授:}} & \LARGE 楊啟瑞 \\[0.5cm]
 		\end{tabular}
 
 		\vspace{3cm}
 		% TITLE PAGE FOOTER
 		\begin{center}
-			{\LARGE 中華民國 109 年 12 月 27日}
+			{\LARGE 中華民國 109 年 12 月 30日}
 		\end{center}
 \end{titlepage}
 
@@ -62,6 +62,16 @@ computation time.
 
 \section{Introduction}
 \label{sec:Introduction}
+The 5G-DIVE project between Taiwan and the European Union aims to show the viability of 
+5G and edge computing. The emphasis in NCTU involves using drones to scan disaster areas
+for Persons in Need of Help(PiH). Once a PiH is located by a drone, another drone will 
+start taking images from that area and sending them to a server for image stitching. 
+The contribution this project aims to make is to tailor the pipeline for this specific
+scenario, hopefully reducing the latency enough to perform image stitching in real-time.
+Once the stitching is performed, some more information can be gained frome the area 
+surrounding the PiH,  such as other PiH or a potential hazard. First, we provide a
+preliminary introduction to the idea of image stitching.
+
 A panorama in visual art depicts a continuous scene or landscape~\cite{Panorama}. 
 The concept of panoramas in photoraphy has existed for centuries. 
 In the middle of the 19$^{th}$ century, landscapes were created by placing daguerrotypes side by side
@@ -99,6 +109,14 @@ over an area impacted by some disaster. This footage is then to be transmitted
 to a server for stitching. Using the stitched images, a clearer representation of the 
 impacted area should be visible, in case detecting persons in need of help or
 producing a clearer picture of the area was necessary. 
+
+The problem addressed in this paper involves taking a stream or set of images
+of a specific area and outputs a single stitched image. The image is a composite
+of the input images and their overlapping components. This pipeline should be 
+robust and have as little latency as possible, since there will be a consistent
+stream of images and the results should be viewed as soon as available. The current
+objective is to have image stitching performed in a few seconds, or as close to 
+real-time as possible.
 
 \section{Existing Literature}
 \label{sec:Literature}
@@ -171,9 +189,9 @@ the main focus was balancing the visual results with the latency. One of the fir
 procedure was timing each step in the pipeline to identify possible areas of improvement.
 
 \begin{figure}
-	\centering
+	%\centering
 	\label{fig:PipelineTiming_orig}
-	\includegraphics[scale=0.6]{pipelineTiming_orig.png}
+	\includegraphics[scale=0.3]{pipelineTiming_orig.png}
 	\caption{Timing diagram of first image stitching pipeline.}
 \end{figure}
 
@@ -205,15 +223,20 @@ there likely is a more efficient way of performing the blending process.
 \section{System Design and Implementation}
 \label{sec:DesignAndImplementation}
 
-The technical aspect of the project involved creating the pipeline step by step so that 
-it could handle multiple images at once. Early on, the decision was made to split the
-pipeline into small scripts, each performing one step.  Each script would read some files as 
-inputs, perform its intended step, and write the files to an output directory. This was done
-in order to have a more convenient modification experience. By implementing the pipeline as small
-modules rather than a single script, changing any single step of the pipeline in the future 
-would be easier. This proved to be the case when modifying the original feature matching step with
-SuperGlue. The only concern was to ensure the output followed the same format the next step, 
-image matching, was expecting. 
+A major focus of the process involved testing the latency of each stage in the pipeline.
+The testing was performed only on two images, since the focus of the latency testing
+required us to identify the most time-consuming steps in our pipeline. The program
+was restructured in order to perform this. The original  pipeline program was written
+such that it was all in a single file. For latency testing, the pipeline was split into
+each stage. This way we could easily measure the latency on one single task.
+
+Figure~\ref{fig:tree} shows the directory structure used to test the latency. Each subdirectory
+contains an \texttt{input/} and \texttt{output/} subdirectory, along with a \texttt{main.py}
+script. The code in each stage was refactored such that each \texttt{main.py} script would
+take the required inputs from the previous stages and once finished, write its output to
+the \texttt{output/} directory. In this manner we could straightforwardly use a Python timer, 
+alongside the \texttt{time} command to carry out the latency testing for each stage.
+
 
 \begin{figure}
 	\label{fig:tree}
@@ -224,6 +247,8 @@ image matching, was expecting.
 		read from and stored to.}
 \end{figure}
 
+When the final pipeline is to be implemented, the structure will most likely be 
+a single script that executes all the steps of the pipeline.
 \section{Result Analysis}
 \label{sec:Results}
 
@@ -234,6 +259,13 @@ The normal \texttt{main.py} script will utilize the original pipeline design wit
 perform feature matching. The \texttt{SuperGlue/} directory contains the software project for
 the alternative neural network method.
 
+In order to use the results from the step, the output files were written to the \texttt{output/}
+directory, where they were then used by the folder corresponding to the next step in the 
+pipeline. There still remains some work to be done in integrating the result of the network
+with the rest of the pipeline, specifically referring to the format of the outputs from the 
+feature matching stage. Despite this, early results indicate the possibility of a substantial
+reduction in the stitching latency.
+
 \begin{figure}
 	\centering
 	\label{fig:TimingComparison_comp}
@@ -242,14 +274,54 @@ the alternative neural network method.
 		SuperGlue pretrained network.}
 \end{figure}
 
-Based on Figure~\ref{fig:TimingComparison_comp}, the timing resulted in a faster implementation
-of the feature matching stage.
+Based on Figure~\ref{fig:TimingComparison_comp}, implementing the neural network method for
+feature matching resulted in around an $80\%$ reduction in latency. As mentioned, this 
+promising first result could lead to further reduction in latency for future stages in the
+stitching pipeline, particularly the blending stage, which after feature matching is the 
+longest stage.
+
 \section{Conclusions and Contributions}
 \label{sec:Conclusion}
+In conclusion, the image stitching pipeline can be optimized for our use case. By using some
+more recent methods involving AI, the latency of previously intensive steps can be reduced 
+significantly. In the future, we hope this method can be used in near real-time in the 5G-DIVE
+project. While there are still many technical considerations to be resolved before this 
+project's implementation, there has already been some promising progress so far.
 
+The 5G-DIVE project involves controlling multiple drones and their feed to perform person
+detection, and subsequently image stitching. The image stitching component constitutes a small
+part of the overall project. 
 
+To this end, this project would not have been possible without the edifying criticism and 
+guidance from my advising professor, 楊啟瑞. Although she rarely takes undergraduate 
+students, she made an exception for me and this opportunity would not have been possible 
+otherwise. Also, a heartfelt thanks is in order to the students in her lab, Timothy William and
+Muhammad Febrian Ardiansyah, who patiently helped me write bi-weekly progress reports and 
+assisted with the requirements for this course.
+
+\section{Future Steps}
+\label{sec:FutureSteps}
+Since the 5G-DIVE project is still ongoing, there are some considerations that need to be 
+addressed before this project can officially be considered as finished. For example, the input
+images to the stitching module will come from a drone that is continually shooting images. 
+If we stitch images that were taken almost at the same time the difference might not be 
+noticable, it would be a misuse of processing time. Thus we need to find the optimal rate 
+at which to stitch images, e.g. every third image in a stream of images. 
+
+Another remaining consideration involves investigating progressive stitching. By this, we mean
+that instead of stitching the images completely from zero every time, we could hold a panorama
+image and cumulatively stitch that panorama image with incoming images. This way we would only
+be required to stitch few images per iteration. The possible drawback in this scenario could
+be the distortion or visual artifacts remaining after every iteration. These might be compounded
+if we used the same panorama image repeatedly in multiple iterations.
+
+In terms of challenges, the largest one involved stitching regions of a building side without
+much changes. Many of the datasets that were tested varied too little between each image. 
+Also, since the building sides contained many of the same features in different regions of the 
+image, the pipeline struggled to determine where each region was supposed to be stitched. As
+a result, some regions of interest were left out of the image completely.
 \vspace{\fill}
 
-\printbibliography
+\erintbibliography
 \end{document}
 
