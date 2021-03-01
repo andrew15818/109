@@ -1,13 +1,65 @@
-[0] Config.pm:304> INFO - This is Biber 2.14
-[0] Config.pm:307> INFO - Logfile is '0616110.blg'
-[63] biber:322> INFO - === Tue Jan  5, 2021, 02:49:39
-[75] Biber.pm:415> INFO - Reading '0616110.bcf'
-[125] Biber.pm:943> INFO - Found 2 citekeys in bib section 0
-[135] Biber.pm:4256> INFO - Processing section 0
-[135] Utils.pm:75> INFO - Globbing data source '0616110.bib'
-[135] Utils.pm:91> INFO - Globbed data source '0616110.bib' to 0616110.bib
-[144] Biber.pm:4455> INFO - Looking for bibtex format file '0616110.bib' for section 0
-[144] bibtex.pm:1653> INFO - LaTeX decoding ...
-[149] bibtex.pm:1471> INFO - Found BibTeX data source '0616110.bib'
-[172] Utils.pm:320> ERROR - BibTeX subsystem: /tmp/biber_tmp_0Kn0/0616110.bib_46177.utf8, line 11, syntax error: found "date", expected end of entry ("}" or ")") (skipping to next "@")
-[172] Biber.pm:132> INFO - ERRORS: 1
+This is BibTeX, Version 0.99d (TeX Live 2020/Arch Linux)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: 0616110.aux
+The style file: biblatex.bst
+Reallocated glb_str_ptr (elt_size=8) to 20 items from 10.
+Reallocated global_strs (elt_size=20001) to 20 items from 10.
+Reallocated glb_str_end (elt_size=8) to 20 items from 10.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated wiz_functions (elt_size=8) to 6000 items from 3000.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Database file #1: 0616110-blx.bib
+Database file #2: 0616110.bib
+Biblatex version: 3.15
+Reallocated wiz_functions (elt_size=8) to 9000 items from 6000.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+You've used 8 entries,
+            6393 wiz_defined-function locations,
+            1238 strings with 9923 characters,
+and the built_in function-call counts, 35362 in all, are:
+= -- 1583
+> -- 2601
+< -- 314
++ -- 2331
+- -- 2035
+* -- 1254
+:= -- 3968
+add.period$ -- 0
+call.type$ -- 8
+change.case$ -- 145
+chr.to.int$ -- 232
+cite$ -- 14
+duplicate$ -- 2997
+empty$ -- 2966
+format.name$ -- 138
+if$ -- 6121
+int.to.chr$ -- 0
+int.to.str$ -- 16
+missing$ -- 0
+newline$ -- 139
+num.names$ -- 240
+pop$ -- 2322
+preamble$ -- 1
+purify$ -- 154
+quote$ -- 0
+skip$ -- 1275
+stack$ -- 0
+substring$ -- 2724
+swap$ -- 851
+text.length$ -- 190
+text.prefix$ -- 0
+top$ -- 1
+type$ -- 260
+warning$ -- 0
+while$ -- 350
+width$ -- 0
+write$ -- 132

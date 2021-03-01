@@ -21,7 +21,12 @@ Look into:
 - The newly-founded People's Republic of China claimed Taiwan
 - The island of Taiwan at the time was part of the Japanese Empire
 
-
+### Statehood
+- What makes a country a country?
+- Does Taiwan fill this role?
+- Montevideo Convention
+- Independent of outside recognition
+- UN membership and the problem with this argument 
 ### Argument and Analysis
 - Mostly argue why Taiwan is already a country by all measures, even if it lacks recognition.
 

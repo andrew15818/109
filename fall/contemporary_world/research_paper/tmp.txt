@@ -1,0 +1,6 @@
+(LaTeX3)                 The version of expl3 preloaded in LaTeX is
+(LaTeX3)                 2020-12-03, but the version of expl3 you are trying
+(LaTeX3)                 to load is dated 2020-08-07. This is most likely
+(LaTeX3)                 due to a stray format file in the user tree. Please
+(LaTeX3)                 make sure that your LaTeX format is updated.
+

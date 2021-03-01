@@ -1,0 +1,140 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.1 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated as
+% required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+\datalist[entry]{none/global//global/global}
+  \entry{ChineseRevolution}{online}{}
+    \list{publisher}{1}{%
+      {Encyclopedia Britannica}%
+    }
+    \field{labeltitlesource}{title}
+    \field{title}{Chinese Revolution}
+    \verb{url}
+    \verb https://www.britannica.com/event/Chinese-Revolution-1911-1912
+    \endverb
+    \field{day}{20}
+    \field{month}{07}
+    \field{year}{1998}
+  \endentry
+
+  \entry{ChineseCivilWar}{online}{}
+    \list{publisher}{1}{%
+      {Encyclopedia Britannica}%
+    }
+    \field{labeltitlesource}{title}
+    \field{title}{Chinese Civil War}
+    \verb{url}
+    \verb https://www.britannica.com/event/Chinese-Civil-War
+    \endverb
+    \field{day}{18}
+    \field{month}{01}
+    \field{year}{2018}
+  \endentry
+
+  \entry{TaiwanRelationsAct}{online}{}
+    \list{publisher}{1}{%
+      {96th Congress}%
+    }
+    \field{labeltitlesource}{title}
+    \field{title}{Taiwan Relations Act}
+    \verb{url}
+    \verb https://photos.state.gov/libraries/ait-taiwan/171414/ait-pages/tra_e.
+    \verb pdf
+    \endverb
+    \field{day}{01}
+    \field{month}{01}
+    \field{year}{1979}
+  \endentry
+
+  \entry{MontevideoConvention}{misc}{}
+    \name{author}{1}{}{%
+      {{hash=B}{%
+         family={Britannica},
+         familyi={B\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Britannica}%
+    }
+    \strng{namehash}{B1}
+    \strng{fullhash}{B1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{montevideo}
+    \verb{url}
+    \verb https://www.britannica.com/event/Montevideo-Convention
+    \endverb
+  \endentry
+
+  \entry{MontevideoConventionText}{misc}{}
+    \name{author}{1}{}{%
+      {{hash=oASO}{%
+         prefix={of},
+         prefixi={o\bibinitperiod},
+         family={American\bibnamedelima States},
+         familyi={A\bibinitperiod\bibinitdelim S\bibinitperiod},
+         given={Organization},
+         giveni={O\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{ASOo1}
+    \strng{fullhash}{ASOo1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Convention on Rights and Duties of States}
+    \verb{url}
+    \verb http://www.oas.org/juridico/english/treaties/a-40.html
+    \endverb
+    \field{day}{26}
+    \field{month}{12}
+    \field{year}{1933}
+  \endentry
+
+  \entry{krasner2001problematic}{book}{}
+    \name{author}{1}{}{%
+      {{hash=KSD}{%
+         family={Krasner},
+         familyi={K\bibinitperiod},
+         given={Stephen\bibnamedelima D},
+         giveni={S\bibinitperiod\bibinitdelim D\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Columbia University Press}%
+    }
+    \strng{namehash}{KSD1}
+    \strng{fullhash}{KSD1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{title}{Problematic sovereignty: Contested rules and political
+  possibilities}
+    \field{year}{2001}
+  \endentry
+
+  \entry{UNHistory}{online}{}
+    \list{publisher}{1}{%
+      {United Nations}%
+    }
+    \field{labeltitlesource}{title}
+    \field{title}{History of the United Nations}
+    \verb{url}
+    \verb https://www.un.org/en/sections/history/history-united-nations/index.h
+    \verb tml
+    \endverb
+  \endentry
+\enddatalist
+\endinput
