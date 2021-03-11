@@ -6,7 +6,14 @@ from mininet.topo import Topo
 from mininet.net import Mininet
 from mininet.node import Node, Switch
 from mininet.cli import CLI
+class NetObject:
+    def __init__(interfaces, address):
+        self.interfaces = {}
+        for inter in interface:
+            self.interfaces[inter] = address
+        
 
+    
 class Router(Node):
     "Node with Linux Router Function"
     
@@ -75,6 +82,18 @@ def topology():
 
     net.stop()
 
+r1 = {'eth0':'10.0.1.2./24',
+        'eth1':'192.168.1.1/26',
+        'eth2':'192.168.1.2/26'
+        }
+r2 = {'eth0':'10.0.0.1/24',
+        'eth1':'10.0.1.1/24',
+        }
+r3 = {'eth0':'10.0.0.2/24',
+        'eth1':'10.0.2.1/24'
+        }
+r4 = {'eth0':'10.0.2.3/24',
+        'eth1':'192.168.3.1/24'}
 def config(hosts, switches, routers, DHCPServer):
     # Hosts interface IP and  default gateway configuration
     # MAybe change the IP addrs of the question marks
@@ -93,25 +112,35 @@ def config(hosts, switches, routers, DHCPServer):
 
     # ...
     #Routers interface IP configuration
-    routers['r1'].cmd('ifconfig r1-eth0 10.0.1.2/24')
-    routers['r1'].cmd('ifconfig r1-eth1 192.168.1.1/26')
-    routers['r1'].cmd('ifconfig r1-eth2 192.168.1.2/26')
+    routers['r1'].cmd('ifconfig r1-eth0 %s' % (r1['eth0']))
+    routers['r1'].cmd('ifconfig r1-eth1 %s' % (r1['eth1']))
+    routers['r1'].cmd('ifconfig r1-eth2 %s' % (r1['eth2']))
 
-    routers['r2'].cmd('ifconfig r2-eth0 10.0.0.1/24')
-    routers['r2'].cmd('ifconfig r2-eth1 10.0.1.1/24')
+    routers['r2'].cmd('ifconfig r2-eth0 %s' % (r2['eth0']))
+    routers['r2'].cmd('ifconfig r2-eth1 %s' % (r2['eth1']))
 
-    routers['r3'].cmd('ifconfig r3-eth0 10.0.0.2/24')
-    routers['r3'].cmd('ifconfig r3-eth1 10.0.2.1/24')
+    routers['r3'].cmd('ifconfig r3-eth0 %s' % (r3['eth0']))
+    routers['r3'].cmd('ifconfig r3-eth1 %s' % (r3['eth1']))
 
-    routers['r4'].cmd('ifconfig r4-eth0 10.0.2.3/24')
-    routers['r4'].cmd('ifconfig r4-eth1 192.168.3.1/24')
+    routers['r4'].cmd('ifconfig r4-eth0 %s' % (r4['eth0']))
+    routers['r4'].cmd('ifconfig r4-eth1 %s' % (r4['eth1']))
 
     # ...
     # Router routing table configuration
     #routers['r1'].cmd('route add -net [networkID/prefix] gw [peer IP]')
     # Maybe change the order of the addresses
-    routers['r1'].cmd('route add -net 10.0.1.1/24 gw 10.0.1.2/24')
-    routers['r1'].cmd('route add -net 192.168.1.4/26 gw 192.168.1.2/26')
+    routers['r1'].cmd('route add -net %s gw %s' % (r2['eth1'], r1['eth0']))
+    routers['r1'].cmd('route add -net 192.168.1.4/26 gw %s' %(r1['eth1']))
+    routers['r1'].cmd('route add -net 192.168.1.65/26 gw 192.168.1.2/26')
+
+    routers['r2'].cmd('route add -net %s gw %s' % (r1['eth0'], r2['eth1']))
+    routers['r2'].cmd('route add -net %s gw %s' % (r3['eth0'], r2['eth0']))
+
+    routers['r3'].cmd('')
+    routers['r3'].cmd('')
+    
+    routers['r4'].cmd('route add -net 192.168.3.1/24 gw 192.168.3.1/24')
+    routers['r4'].cmd('')
     # ...
 
 def check(hosts):
