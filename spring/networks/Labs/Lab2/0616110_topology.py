@@ -69,7 +69,7 @@ def topology():
     config(hosts, switches, routers, DHCPServer)
 
     # Run DHCP server at node DHCPserver
-    #runDHCP(net) # if your dhcpd.conf is done, uncomment this line 
+    runDHCP(net) # if your dhcpd.conf is done, uncomment this line 
 
     check(hosts)
 
@@ -82,9 +82,10 @@ def topology():
 
     net.stop()
 
-r1 = {'eth0':'10.0.1.2./24',
-        'eth1':'192.168.1.1/26',
-        'eth2':'192.168.1.2/26'
+r1 = {'eth0':'10.0.1.2/24',
+        'eth1':'192.168.1.62/26',
+        'eth2':'192.168.1.126/26'
+        #'eth2':'192.168.1.62/26'
         }
 r2 = {'eth0':'10.0.0.1/24',
         'eth1':'10.0.1.1/24',
@@ -93,22 +94,25 @@ r3 = {'eth0':'10.0.0.2/24',
         'eth1':'10.0.2.1/24'
         }
 r4 = {'eth0':'10.0.2.3/24',
-        'eth1':'192.168.3.1/24'}
+        'eth1':'192.168.3.254/24'
+        }
 def config(hosts, switches, routers, DHCPServer):
     # Hosts interface IP and  default gateway configuration
     # MAybe change the IP addrs of the question marks
     DHCPServer.cmd('ifconfig DHCPServer-eth0 192.168.1.4/26')
+
     hosts['h2'].cmd('ifconfig h2-eth0 192.168.1.65/26')
-    hosts['h2'].cmd('route add default gw 192.168.1.2/26 eth2')
+    #hosts['h2'].cmd('route add default gw 192.168.1.2/26 eth2')
+    hosts['h2'].cmd('route add default gw 192.168.1.126')
     
     hosts['h3'].cmd('ifconfig h3-eth0 192.168.1.66/26')
-    hosts['h3'].cmd('route add default gw 192.168.1.2/26')
+    hosts['h3'].cmd('route add default gw 192.168.1.126')
 
     hosts['h4'].cmd('ifconfig h4-eth0 192.168.3.1/24')
-    hosts['h4'].cmd('route add default gw 192.168.3.1/24')
+    hosts['h4'].cmd('route add default gw 192.168.3.254')
     
     hosts['h5'].cmd('ifconfig h5-eth0 192.168.3.2/24')
-    hosts['h5'].cmd('route add default gw 192.168.3.1/24')
+    hosts['h5'].cmd('route add default gw 192.168.3.254')
 
     # ...
     #Routers interface IP configuration
@@ -129,18 +133,15 @@ def config(hosts, switches, routers, DHCPServer):
     # Router routing table configuration
     #routers['r1'].cmd('route add -net [networkID/prefix] gw [peer IP]')
     # Maybe change the order of the addresses
-    routers['r1'].cmd('route add -net %s gw %s' % (r2['eth1'], r1['eth0']))
-    routers['r1'].cmd('route add -net 192.168.1.4/26 gw %s' %(r1['eth1']))
-    routers['r1'].cmd('route add -net 192.168.1.65/26 gw 192.168.1.2/26')
-
-    routers['r2'].cmd('route add -net %s gw %s' % (r1['eth0'], r2['eth1']))
-    routers['r2'].cmd('route add -net %s gw %s' % (r3['eth0'], r2['eth0']))
-
-    routers['r3'].cmd('')
-    routers['r3'].cmd('')
-    
-    routers['r4'].cmd('route add -net 192.168.3.1/24 gw 192.168.3.1/24')
-    routers['r4'].cmd('')
+    routers['r1'].cmd('route add -net 192.168.3.0/24 gw 10.0.1.1')
+    routers['r2'].cmd('route add -net 192.168.1.64/26 gw 10.0.1.2')
+    routers['r2'].cmd('route add -net 192.168.1.0/26 gw 10.0.1.2')
+    routers['r2'].cmd('route add -net 192.168.3.0/24 gw 10.0.0.2')
+    routers['r3'].cmd('route add -net 192.168.1.0/26 gw 10.0.0.1')
+    routers['r3'].cmd('route add -net 192.168.1.64/26 gw 10.0.0.1')
+    routers['r3'].cmd('route add -net 192.168.3.0/24 gw 10.0.2.3')
+    routers['r4'].cmd('route add -net 192.168.1.0/26 gw 10.0.2.1')
+    routers['r4'].cmd('route add -net 192.168.1.64/26 gw 10.0.2.1')
     # ...
 
 def check(hosts):
