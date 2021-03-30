@@ -101,6 +101,7 @@ def config(hosts, switches, routers, DHCPServer):
     # MAybe change the IP addrs of the question marks
     DHCPServer.cmd('ifconfig DHCPServer-eth0 192.168.1.4/26')
 
+    hosts['h1'].cmd('dhclient h1-eth0')
     hosts['h2'].cmd('ifconfig h2-eth0 192.168.1.65/26')
     #hosts['h2'].cmd('route add default gw 192.168.1.2/26 eth2')
     hosts['h2'].cmd('route add default gw 192.168.1.126')
