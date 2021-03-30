@@ -19,6 +19,7 @@ int main(int argc, char *argv[]){
 	DIR *dir, *subDir;
 	struct dirent *dirEntry;
 	struct dirent *subDirEntry;
+	struct lsofEntry* tail;
 	
 
 	if((dir = opendir(procPath)) == NULL){
@@ -26,20 +27,25 @@ int main(int argc, char *argv[]){
 	}
 	// Read each directory in /proc
 	while((dirEntry= readdir(dir)) != NULL){
-		struct lsofEntry* lsEntry;
+		struct lsofEntry* lsEntry = newLSOFEntry();
+		
+		tail->next = lsEntry;
+		tail = lsEntry;
+
+		// Join the two string pathnames
 		getPathName(procEntryName, procPath, dirEntry->d_name);
 		if((subDir= opendir(procEntryName)) == NULL){
 			continue;
 		}
+		// skip the current and parent dirs
 		if(!strncmp(dirEntry->d_name, ".", strlen(dirEntry->d_name))
 			|| !strncmp(dirEntry->d_name, "..", strlen(dirEntry->d_name))){
-			printf("ran into it\n");	
 			continue;
 		}
-		//printf("Viewing %s\n", dirEntry->d_name);
-		printf("%d\n",atoi(dirEntry->d_name));
+
 		lsEntry->pid = atoi(dirEntry->d_name);
 		//getProcInfo(lsEntry, subDir);
+		printf("%ld\n", _hash("comm"));
 	}
 	return 0;
 }

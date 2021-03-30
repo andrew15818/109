@@ -1,6 +1,12 @@
 #include "entry.h"
 // Hash the required files names 
 // rather than calling strncmp a whole bunch
+struct lsofEntry* newLSOFEntry()
+{
+	struct lsofEntry* entry = (struct lsofEntry*)malloc(sizeof(struct lsofEntry));
+	entry->next= NULL;
+	return entry;
+}
 unsigned long _hash(const char* str)
 {
 	unsigned long hash = 5381;
@@ -30,6 +36,6 @@ void getProcInfo(struct lsofEntry* lentry, DIR* dir)
 	//getPathName(filename, filename, tmp);
 	struct dirent* procInfo;
 	while((procInfo = readdir(dir)) != NULL){
-		//printf("\tReading %s\n", procInfo->d_name);	
+		printf("\tReading %s\n", procInfo->d_name);	
 	}
 }

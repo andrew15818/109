@@ -6,6 +6,9 @@ For example, we need to see the `proc/<PID>/fd` to see what files the process
 has open. We need to make an entry for each of those files.
 However, I think that we would need sudo privileges to see these files.
 
+Now, I was thinking of having a linked list of entries. At the start, we don't know how 
+many entries are in the `/proc/` directory, so we can't use a table or something like that.
+
 ### Command
 - Executable name of the running process
 - Don't show the cmd line args (so no `/proc/<PID>/cmdline`)
