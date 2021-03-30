@@ -1,5 +1,7 @@
 *.log 
 
+*.o
+
 *.aux
 
 *.out
@@ -7,4 +9,6 @@
 *.weights
 
 textbooks/
+
+*.bak
 
