@@ -7,7 +7,7 @@ struct CmdLineArgs{
 	int c, t, f;
 	char *c_opt;
 	char *t_opt;
-	char *f_opt;;
+	char *f_opt;
 } ;
 
 void parseOptions(struct CmdLineArgs*, int, char**);

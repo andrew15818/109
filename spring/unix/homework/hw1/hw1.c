@@ -3,12 +3,8 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <string.h>
-/*
- * TODO: 
- * 	1. Mess w/ /proc to see needed info.
- * 	2. See how we can list or go through all the processes
- * 	3. For the data not available in stat, how do we find it? Manually parse /proc/pid/? 
- * */
+#include <stdlib.h>
+
 #include "opts.h"
 #include "entry.h"
 
@@ -24,19 +20,26 @@ int main(int argc, char *argv[]){
 	struct dirent *dirEntry;
 	struct dirent *subDirEntry;
 	
-	struct lsofEntry* procInfo;	
 
 	if((dir = opendir(procPath)) == NULL){
 		perror("opendir");	
 	}
 	// Read each directory in /proc
 	while((dirEntry= readdir(dir)) != NULL){
-		getPathName(procEntryName, procPath, dirEntry);
-		printf("%s\n", procEntryName);
+		struct lsofEntry* lsEntry;
+		getPathName(procEntryName, procPath, dirEntry->d_name);
 		if((subDir= opendir(procEntryName)) == NULL){
 			continue;
 		}
-		getProcInfo(procInfo, subDir);
+		if(!strncmp(dirEntry->d_name, ".", strlen(dirEntry->d_name))
+			|| !strncmp(dirEntry->d_name, "..", strlen(dirEntry->d_name))){
+			printf("ran into it\n");	
+			continue;
+		}
+		//printf("Viewing %s\n", dirEntry->d_name);
+		printf("%d\n",atoi(dirEntry->d_name));
+		lsEntry->pid = atoi(dirEntry->d_name);
+		//getProcInfo(lsEntry, subDir);
 	}
 	return 0;
 }
