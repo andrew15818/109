@@ -8,23 +8,34 @@
 #define MAX 250
 #define MED 20
 #define MIN 10
-struct lsofEntry{
-	char command[MAX];
-	//char pid[MED];
-	size_t pid;
-	//int pid;
-	char user[MAX];
-	size_t 		fd;
-	char mode[MED];
-	char type[MED];
-	size_t 		inode;
+struct Child{
+	size_t fd;	
+	size_t type;
+	size_t node;
 	char filename[MAX];
-	struct lsofEntry* next  ;
+	struct Child* next;
+};
+struct Parent{
+	char command[MAX];
+	size_t pid;
+	char user[MAX];
+	struct Child* child;
+	struct Parent* next;
+};
+struct Table{
+
+	struct Parent* tail;
+   	struct Parent* head;
 };
 
-struct lsofEntry* newLSOFEntry();
+struct Table* newTable();
+struct Parent* newParent();
+struct Child* newChild();
+
+int addTableEntry(struct Table*, struct Parent*);
 unsigned long _hash(const char*);
-void getPathName(char*, const char*, const char*);
-void getProcInfo(struct lsofEntry*, DIR*);
+void addPathName(char*, const char*, const char*);
+void fillEntry(struct Parent*, DIR* dir); 
+void fillParent(struct Parent*, DIR*);
 
 #endif
