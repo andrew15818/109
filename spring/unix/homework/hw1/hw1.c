@@ -11,41 +11,47 @@
 char* procPath = "/proc/";
 // since max length is 250
 char procEntryName[251];
+
 int main(int argc, char *argv[]){
 	struct CmdLineArgs args;
 	parseOptions(&args, argc, argv);	
+	int n;
 
 	// Similar to getopt(), get one dirent at a time
 	DIR *dir, *subDir;
-	struct dirent *dirEntry;
-	struct dirent *subDirEntry;
-	struct lsofEntry* tail;
-	
-
-	if((dir = opendir(procPath)) == NULL){
-		perror("opendir");	
-	}
-	// Read each directory in /proc
-	while((dirEntry= readdir(dir)) != NULL){
-		struct lsofEntry* lsEntry = newLSOFEntry();
+	struct dirent **processes;
 		
-		tail->next = lsEntry;
-		tail = lsEntry;
 
-		// Join the two string pathnames
-		getPathName(procEntryName, procPath, dirEntry->d_name);
-		if((subDir= opendir(procEntryName)) == NULL){
+	// Read each directory in /proc
+	n = scandir(procPath, &processes, NULL, alphasort);
+	if(n == -1){
+		perror("scandir");	
+		exit(EXIT_FAILURE);
+	}
+	struct Table* table = newTable();
+	int i = 0;
+	// Open the sorted dir
+	while(i < n){
+		if(!strcmp(processes[i]->d_name, ".")
+			|| !strcmp(processes[i]->d_name, "..")){
+			i++;
 			continue;
 		}
-		// skip the current and parent dirs
-		if(!strncmp(dirEntry->d_name, ".", strlen(dirEntry->d_name))
-			|| !strncmp(dirEntry->d_name, "..", strlen(dirEntry->d_name))){
+		//
+		addPathName(procEntryName, 
+					procPath, 
+					processes[i]->d_name);
+
+		subDir = opendir(procEntryName);
+		if(subDir == NULL){
+			i++;
 			continue;
 		}
-
-		lsEntry->pid = atoi(dirEntry->d_name);
-		//getProcInfo(lsEntry, subDir);
-		printf("%ld\n", _hash("comm"));
+		struct Parent *process = newParent();
+		addTableEntry(table, process);
+		fillEntry(process, subDir);
+		//
+		i++;
 	}
 	return 0;
 }

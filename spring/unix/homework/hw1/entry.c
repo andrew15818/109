@@ -1,11 +1,30 @@
 #include "entry.h"
+#define HCOMM 6385123249
 // Hash the required files names 
 // rather than calling strncmp a whole bunch
-struct lsofEntry* newLSOFEntry()
+struct Parent* newParent()
 {
-	struct lsofEntry* entry = (struct lsofEntry*)malloc(sizeof(struct lsofEntry));
-	entry->next= NULL;
-	return entry;
+	struct Parent* parent= malloc(sizeof(struct Parent));
+	parent->child = NULL;
+	parent->next = NULL;
+	return parent;
+}
+struct Table* newTable()
+{
+	struct Table* table = malloc(sizeof(struct Table));	
+	table->tail = NULL;
+	table->head = NULL;
+	return table;
+}
+int addTableEntry(struct Table* tb, struct Parent* pr)
+{
+	if(tb == NULL || pr == NULL){return 0;}
+	// adding first element
+	if(tb->tail != NULL){
+		tb->tail->next = pr;
+	}
+	tb->tail = pr;
+	return 1;
 }
 unsigned long _hash(const char* str)
 {
@@ -16,10 +35,10 @@ unsigned long _hash(const char* str)
 	}	
 	return hash;
 }
-void getPathName(char* procEntry, const char* procPath, const char* subDirName)
+void addPathName(char* procEntry, const char* procPath, const char* subDirName)
 {
 	snprintf(procEntry,
-		strlen(procPath) + strlen(subDirName),
+		strlen(procPath) + strlen(subDirName)+1,
 		"%s%s//\n",
 		procPath,
 		subDirName
@@ -27,15 +46,14 @@ void getPathName(char* procEntry, const char* procPath, const char* subDirName)
 	// Get the correct
 	strcat(procEntry, "/");
 }
-void getProcInfo(struct lsofEntry* lentry, DIR* dir)
+void fillParent(struct Parent* parent, DIR* dir)
 {
-	char filename[250] = "/proc/";
-	char tmp[12];
-	sprintf(tmp, "%d\n", lentry->pid);
-	printf("turn int to str: %s\n", tmp);
-	//getPathName(filename, filename, tmp);
-	struct dirent* procInfo;
-	while((procInfo = readdir(dir)) != NULL){
-		printf("\tReading %s\n", procInfo->d_name);	
+	struct dirent* ent;
+	while((ent = readdir(dir)) != NULL){
+		printf("\t%s\n", ent->d_name);	
 	}
+}
+void fillEntry(struct Parent* parent, DIR* dir)
+{	
+	fillParent(parent, dir);
 }
