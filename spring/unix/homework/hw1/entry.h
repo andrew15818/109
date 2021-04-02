@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <pwd.h>
 
 #define MAX 250
 #define MED 20
@@ -19,6 +23,7 @@ struct Parent{
 	char command[MAX];
 	size_t pid;
 	char user[MAX];
+	char path[MAX];
 	struct Child* child;
 	struct Parent* next;
 };
@@ -35,7 +40,8 @@ struct Child* newChild();
 int addTableEntry(struct Table*, struct Parent*);
 unsigned long _hash(const char*);
 void addPathName(char*, const char*, const char*);
+void pGetUser(struct Parent*);
 void fillEntry(struct Parent*, DIR* dir); 
 void fillParent(struct Parent*, DIR*);
-
+void printTable(struct Table*);
 #endif

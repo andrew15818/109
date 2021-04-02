@@ -47,11 +47,19 @@ int main(int argc, char *argv[]){
 			i++;
 			continue;
 		}
+		// Non-dir entries will return zero, can skip
+		if(atoi(processes[i]->d_name) == 0){continue;}
+	
 		struct Parent *process = newParent();
+		strncpy(process->path, procEntryName, strlen(procEntryName));
+		process->path[strlen(procEntryName)] = '\0';
+		process->pid = atoi(processes[i]->d_name);
 		addTableEntry(table, process);
 		fillEntry(process, subDir);
+	
 		//
 		i++;
 	}
+	//printTable(table);		
 	return 0;
 }
