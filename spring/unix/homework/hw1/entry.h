@@ -12,19 +12,20 @@
 #define MAX 250
 #define MED 20
 #define MIN 10
-struct Child{
+struct fileDes{
 	size_t fd;	
 	size_t type;
 	size_t node;
 	char filename[MAX];
-	struct Child* next;
+	struct fileDes* next;
 };
 struct Parent{
 	char command[MAX];
 	size_t pid;
 	char user[MAX];
 	char path[MAX];
-	struct Child* child;
+	struct fileDes* head;
+	struct fileDes* tail;
 	struct Parent* next;
 };
 struct Table{
@@ -35,13 +36,14 @@ struct Table{
 
 struct Table* newTable();
 struct Parent* newParent();
-struct Child* newChild();
+struct fileDes* newFileDes();
 
 int addTableEntry(struct Table*, struct Parent*);
-unsigned long _hash(const char*);
+int addParentEntry(struct Parent*, struct fileDes*);
 void addPathName(char*, const char*, const char*);
 void pGetUser(struct Parent*);
 void fillEntry(struct Parent*, DIR* dir); 
-void fillParent(struct Parent*, DIR*);
+void fillParent(struct Parent*);
+void fillChildren(struct Parent*);
 void printTable(struct Table*);
 #endif

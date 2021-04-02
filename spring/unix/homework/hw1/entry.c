@@ -5,10 +5,17 @@
 // rather than calling strncmp a whole bunch
 struct Parent* newParent()
 {
-	struct Parent* parent= malloc(sizeof(struct Parent));
-	parent->child = NULL;
+	struct Parent* parent = malloc(sizeof(struct Parent));
+	parent->head = NULL;
+	parent->tail = NULL;
 	parent->next = NULL;
 	return parent;
+}
+struct fileDes* newFileDes()
+{
+	struct fileDes* child = malloc(sizeof(struct fileDes));
+	child->next = NULL;
+	return child;
 }
 struct Table* newTable()
 {
@@ -16,6 +23,22 @@ struct Table* newTable()
 	table->tail = NULL;
 	table->head = NULL;
 	return table;
+}
+int addParentEntry(struct Parent* parent, struct fileDes* fdes)
+{
+	if(parent  == NULL || fdes == NULL){
+		printf("Null child or file descriptor.\n");	
+		return 0;
+	}
+	if(parent->head == NULL){
+		parent->head = fdes;	
+	}
+	if(parent->tail != NULL){
+		parent->tail->next = fdes;
+	}
+	parent->tail = fdes;
+	return 1;
+
 }
 int addTableEntry(struct Table* tb, struct Parent* pr)
 {
@@ -30,15 +53,7 @@ int addTableEntry(struct Table* tb, struct Parent* pr)
 	tb->tail = pr;
 	return 1;
 }
-unsigned long _hash(const char* str)
-{
-	unsigned long hash = 5381;
-	int c;
-	while((c= *str++)){
-		hash = ((hash << 5) + hash)	+ c;
-	}	
-	return hash;
-}
+
 void addPathName(char* procEntry, const char* procPath, const char* subDirName)
 {
 	snprintf(procEntry,
@@ -65,7 +80,30 @@ void pGetUser(struct Parent* par){
 	strncpy(par->user, pwd->pw_name, strlen(pwd->pw_name));
 	//printf("%s\n", par->user);
 }
-void fillParent(struct Parent* parent, DIR* dir)
+void fillChildren(struct Parent* par)
+{
+	/* TODO:
+	 * 1. Open /fd/ dir
+	 * 2. For each entry make a new fileDes, add it to table
+	 * 3. Fill in the info for each file descriptor
+	 * */
+	char fdPath[MAX];	
+	DIR *fdDir;
+	struct dirent* fd;
+	snprintf(fdPath, MAX, "%s%s", par->path, "fd");
+	if((fdDir = opendir(fdPath)) == NULL){
+		perror("open");	
+		return;
+	}
+	while((fd = readdir(fdDir)) != NULL){
+		if((atoi(fd->d_name)) == 0){continue;}
+		printf("\t%s\n", fd->d_name);	
+		struct fileDes* fdes = newFileDes();
+		addParentEntry(par, fdes);
+	}
+
+}
+void fillParent(struct Parent* parent)
 {
 	char statFile[MAX];
 	snprintf(statFile, MAX, "/proc/%d/comm", parent->pid);
@@ -79,8 +117,9 @@ void fillParent(struct Parent* parent, DIR* dir)
 }
 void fillEntry(struct Parent* parent, DIR* dir)
 {	
-	fillParent(parent, dir);
+	fillParent(parent);
 	printf("%s\t%ld\t%s\n", parent->command, parent->pid, parent->user);
+	fillChildren(parent);
 }
 void printTable(struct Table* tb)
 {
