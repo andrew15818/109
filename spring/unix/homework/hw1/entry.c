@@ -1,6 +1,12 @@
 #include "entry.h"
-#define HCOMM 6385123249
-#define HSTAT 6954030894409
+#define TY_REG 100
+#define TY_DIR 101
+#define TY_CHR 102
+#define TY_BLK 103
+#define TY_FIFO 104
+#define TY_LINK 105
+#define TY_SOCK 106
+#define TY_UNKN 107
 // Hash the required files names 
 // rather than calling strncmp a whole bunch
 struct Parent* newParent()
@@ -15,6 +21,7 @@ struct fileDes* newFileDes()
 {
 	struct fileDes* child = malloc(sizeof(struct fileDes));
 	child->next = NULL;
+	child->type = 0;
 	return child;
 }
 struct Table* newTable()
@@ -24,7 +31,7 @@ struct Table* newTable()
 	table->head = NULL;
 	return table;
 }
-int addParentEntry(struct Parent* parent, struct fileDes* fdes)
+int addChild(struct Parent* parent, struct fileDes* fdes)
 {
 	if(parent  == NULL || fdes == NULL){
 		printf("Null child or file descriptor.\n");	
@@ -80,26 +87,53 @@ void pGetUser(struct Parent* par){
 	strncpy(par->user, pwd->pw_name, strlen(pwd->pw_name));
 	//printf("%s\n", par->user);
 }
+void fillChildFilename(struct Parent* par, struct fileDes* fdes, size_t fd)
+{
+	char tmp[MAX];
+	snprintf(tmp,  MAX, "%s%s/%ld", par->path,"fd", fd);
+	// Get the name of the symbolic link file rather than info about the link
+	readlink(tmp, fdes->filename, MAX);
+	//printf("Working filename: %s\n", fdes->filename);
+}
 void fillChildren(struct Parent* par)
 {
-	/* TODO:
-	 * 1. Open /fd/ dir
-	 * 2. For each entry make a new fileDes, add it to table
-	 * 3. Fill in the info for each file descriptor
-	 * */
 	char fdPath[MAX];	
 	DIR *fdDir;
 	struct dirent* fd;
+	struct stat st;
 	snprintf(fdPath, MAX, "%s%s", par->path, "fd");
 	if((fdDir = opendir(fdPath)) == NULL){
 		perror("open");	
 		return;
 	}
+	
 	while((fd = readdir(fdDir)) != NULL){
+	
 		if((atoi(fd->d_name)) == 0){continue;}
-		printf("\t%s\n", fd->d_name);	
+		//printf("\t%s\n", fd->d_name);	
+		snprintf(fdPath, MAX, "%s%s%s", par->path, "fd/", fd->d_name);
+		if((stat(fdPath, &st)) == -1){/*printf("\nSkipping dir\n");*/continue;}
+
 		struct fileDes* fdes = newFileDes();
-		addParentEntry(par, fdes);
+		addChild(par, fdes);
+
+		// File inode
+		fdes->inode = st.st_ino;
+
+		// Type of File Descriptor
+		if(S_ISREG(st.st_mode)){
+			fdes->type=TY_REG;
+			fillChildFilename(par, fdes, atoi(fd->d_name));	
+		}
+		else if(S_ISDIR(st.st_mode)){ 
+			fdes->type=TY_DIR;
+			fillChildFilename(par, fdes, atoi(fd->d_name));		
+		}
+		else if(S_ISCHR(st.st_mode)){fdes->type=TY_CHR; }
+		else if(S_ISBLK(st.st_mode)){ fdes->type=TY_BLK;}
+		else if(S_ISFIFO(st.st_mode)){fdes->type=TY_FIFO;}
+		else if(S_ISLNK(st.st_mode)){ fdes->type=TY_LINK;}
+		else if(S_ISSOCK(st.st_mode)){fdes->type=TY_SOCK;}	
 	}
 
 }
@@ -118,14 +152,36 @@ void fillParent(struct Parent* parent)
 void fillEntry(struct Parent* parent, DIR* dir)
 {	
 	fillParent(parent);
-	printf("%s\t%ld\t%s\n", parent->command, parent->pid, parent->user);
 	fillChildren(parent);
+}
+// Start the head and print all the children
+void printChildren(struct Parent* par)
+{
+	struct fileDes* sent = par->head;	
+	printf("pid:%d\n",par->pid);
+	//printf("%s\t%ld\t%s\n", parent->command, parent->pid, parent->user);
+	while(sent != NULL){
+		
+		printf("%s %ld %s ", 
+				par->command, 
+				par->pid,
+				par->user);
+		
+		printf("%ld %ld  %s\n", 
+				sent->type,
+				sent->inode,
+				sent->filename);
+		
+		//printf("\n\tMoving to next hcild\n");
+		sent = sent->next;	
+	}
 }
 void printTable(struct Table* tb)
 {
+	printf("COMMAND PID USER TYPE NODE NAME\n");
 	struct Parent* sent = tb->head;
 	while(sent != NULL){
-		printf("Process: %s\n", sent->command);
+		printChildren(sent);
 		sent = sent->next;	
 	}
 	return;

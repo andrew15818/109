@@ -60,6 +60,6 @@ int main(int argc, char *argv[]){
 		//
 		i++;
 	}
-	//printTable(table);		
+	printTable(table);		
 	return 0;
 }

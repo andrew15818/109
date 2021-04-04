@@ -15,7 +15,7 @@
 struct fileDes{
 	size_t fd;	
 	size_t type;
-	size_t node;
+	size_t inode;
 	char filename[MAX];
 	struct fileDes* next;
 };
@@ -39,11 +39,13 @@ struct Parent* newParent();
 struct fileDes* newFileDes();
 
 int addTableEntry(struct Table*, struct Parent*);
-int addParentEntry(struct Parent*, struct fileDes*);
+int addChild(struct Parent*, struct fileDes*);
 void addPathName(char*, const char*, const char*);
 void pGetUser(struct Parent*);
 void fillEntry(struct Parent*, DIR* dir); 
 void fillParent(struct Parent*);
 void fillChildren(struct Parent*);
+void fillChildFilename(struct Parent*, struct fileDes*, size_t);
+void printChildren(struct Parent*);
 void printTable(struct Table*);
 #endif
