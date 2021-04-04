@@ -1,5 +1,11 @@
 # Hw1 Implementation deets
 
+TODO:
+1. Handle the optional regular expressions to filter the output.
+2. Get the FD.
+3. Get the correct info for type of FD. Remember the info has to be:
+- 
+
 We need to work closely with `/proc` to find the details on any process.
 
 For example, we need to see the `proc/<PID>/fd` to see what files the process
@@ -29,25 +35,26 @@ The info is arranged as such:
 - `User` Should also be in `/status`
 
 `Child`:
-- `FD` The file descriptor.
+- `FD` The file descriptor. 
 - `Type` Type of file descriptor
 - `Node` Inode
 - `Name` filename of the opened file
 
 ### Command
-- Executable name of the running process
-- Don't show the cmd line args (so no `/proc/<PID>/cmdline`)
-I was thinking that we can try and read the `status` file inside each dir
-to get the command name.
-Or, we could get info about the directory itself and get the command name that way.
-Then we would need to loop through the file descriptors right?
-If we read the `/proc/<PID>/comm` file, we can directly read the name of the process.
+- `/proc/<pid>/comm`
+The command name is also available in `proc/<pid>/stat`, but it is enclosed in parentheses. So rather than doing string manipulation in c (*shudders*) 
+I just read the value from the `/comm` file.
+
 ### PID
-We can use the name of the directory as the PID.
+The PID can be read from the `/proc/<pid>/stat` file as well, but since we already have that name as the name of the directory, I'll just use that one.
 
 ### User
+- For the user info, I first get the userid by using stat on the process file, and then using 
+the getpwuid() function to get the username from the userid. I don't know if there's a better way
+since we're supposed to find the **username** not the **userID**.
 
 ### FD
+I'm still not sure about this one.
 
 ### Type
 
