@@ -1,24 +1,62 @@
 #include "opts.h"
 
-void parseOptions(struct CmdLineArgs* cmd, int argc, char** argv)
+struct CmdLineArgs* newCmdLineArgs()
+{
+	struct CmdLineArgs* cmd = malloc(sizeof(struct CmdLineArgs));
+	cmd->c = cmd->t = cmd->f = 0;
+	cmd->next = NULL;
+	return cmd;
+}
+struct argTable* newArgTable()
+{
+	struct argTable* tb = malloc(sizeof(struct argTable));
+	tb->head = tb->tail = NULL;
+	return tb;
+}
+void printOpts(struct argTable* tb)
+{
+	struct CmdLineArgs* sent = tb->tail;
+	while(sent != NULL){
+		printf("\tOption: c:%d, t:%d, f:%d, opt:%s\n", sent->c, sent->t, sent->f, sent->opt);
+		sent = sent->next;
+	}
+}
+void addArgs(struct argTable* tb, struct CmdLineArgs* arg)
+{
+	if(tb == NULL || arg == NULL){return;}
+	// The first element we're adding
+	if(tb->tail == NULL && tb->head == NULL){
+		tb->tail = tb->head = arg;
+		return;
+	}	
+	tb->head->next = arg;	
+	tb->head = arg;
+}
+void parseOptions(struct argTable* tb, int argc, char** argv)
 {	
-	cmd->c_opt = NULL;
-	cmd->t_opt = NULL;
-	cmd->f_opt = NULL;
 	int i, ch;	
 	while((ch = getopt(argc, argv, "c:t:f:")) != -1){
+		struct CmdLineArgs* cmd = newCmdLineArgs();
+		addArgs(tb, cmd);
 		switch(ch){
 			case 't':
-				cmd->t_opt = optarg;
-				printf("Option -%c with opt %s\n", ch, cmd->t_opt);
+				cmd->t = 1;
+				strncpy(cmd->opt, optarg, MAX);
+				regcomp(&cmd->regex, cmd->opt, REG_EXTENDED);
+				printf("Option -%c with opt %s\n", ch, cmd->opt);
 				break;
+			
 			case 'f':
-				cmd->f_opt = optarg;
-				printf("Option -%c with opt %s\n", ch, cmd->f_opt);
+				cmd->f = 1;
+				strncpy(cmd->opt, optarg, sizeof(cmd->opt));	
+				regcomp(&cmd->regex, cmd->opt, REG_EXTENDED);
+				printf("Option -%c with opt %s\n", ch, cmd->opt);
 				break;
 			case 'c':
-				cmd->c_opt = optarg;
-				printf("Option -%c with opt %s\n", ch, cmd->c_opt);
+				cmd->c = 1;
+				strncpy(cmd->opt, optarg, sizeof(cmd->opt));	
+				printf("Option -%c with opt %s\n", ch, cmd->opt);
+				regcomp(&cmd->regex, cmd->opt, REG_EXTENDED);
 				break;
 			case '?':
 			case ':':

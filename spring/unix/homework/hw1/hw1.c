@@ -13,8 +13,11 @@ char* procPath = "/proc/";
 char procEntryName[251];
 
 int main(int argc, char *argv[]){
-	struct CmdLineArgs args;
-	parseOptions(&args, argc, argv);	
+	struct argTable* argtb = newArgTable(); 
+	parseOptions(argtb, argc, argv);	
+	printf("====Printing Options====\n");
+	printOpts(argtb);
+	printf("====Done====\n");
 	int n;
 
 	// Similar to getopt(), get one dirent at a time
@@ -54,12 +57,13 @@ int main(int argc, char *argv[]){
 		strncpy(process->path, procEntryName, strlen(procEntryName));
 		process->path[strlen(procEntryName)] = '\0';
 		process->pid = atoi(processes[i]->d_name);
-		addTableEntry(table, process);
-		fillEntry(process, subDir);
-	
+		
+		if(fillEntry(process, subDir, argtb)){
+			addTableEntry(table, process);	
+		}
 		//
 		i++;
 	}
-	printTable(table);		
+	//printTable(table);		
 	return 0;
 }
