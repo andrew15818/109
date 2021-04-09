@@ -15,9 +15,11 @@ char procEntryName[251];
 int main(int argc, char *argv[]){
 	struct argTable* argtb = newArgTable(); 
 	parseOptions(argtb, argc, argv);	
+	/*
 	printf("====Printing Options====\n");
 	printOpts(argtb);
 	printf("====Done====\n");
+	*/
 	int n;
 
 	// Similar to getopt(), get one dirent at a time
@@ -54,7 +56,7 @@ int main(int argc, char *argv[]){
 		if(atoi(processes[i]->d_name) == 0){continue;}
 	
 		struct Parent *process = newParent();
-		strncpy(process->path, procEntryName, strlen(procEntryName));
+		strncpy(process->path, procEntryName, sizeof(procEntryName));
 		process->path[strlen(procEntryName)] = '\0';
 		process->pid = atoi(processes[i]->d_name);
 		
@@ -64,6 +66,8 @@ int main(int argc, char *argv[]){
 		//
 		i++;
 	}
-	//printTable(table);		
+	//closedir(subDir);
+
+	printTable(table);		
 	return 0;
 }

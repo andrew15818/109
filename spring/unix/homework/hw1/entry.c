@@ -19,7 +19,7 @@ struct fileDes* newFileDes()
 {
 	struct fileDes* child = malloc(sizeof(struct fileDes));
 	child->next = NULL;
-	//child->type = 0;
+	memset(child->type, '\0', sizeof(child->type));
 	return child;
 }
 struct Table* newTable()
@@ -75,14 +75,15 @@ void pGetUser(struct Parent* par){
 	struct stat st;
 	int ret = stat(par->path, &st);
 	if(ret < 0){
-		perror("open");	
+		//perror("open");	
 		return;
 	}
 	struct passwd *pwd;
 	if((pwd = getpwuid(st.st_uid)) == NULL){
 		printf("Error getting Userid for %s\n", par->pid);	
 	}
-	strncpy(par->user, pwd->pw_name, strlen(pwd->pw_name));
+	//strncpy(par->user, pwd->pw_name, strnlen(pwd->pw_name));
+	snprintf(par->user, strnlen(pwd->pw_name, MAX)+1, "%s", pwd->pw_name);
 	//printf("%s\n", par->user);
 }
 void fillChildFilename(struct Parent* par, struct fileDes* fdes, size_t fd)
@@ -101,32 +102,46 @@ struct fileDes* defReadFile(struct Parent* par, const char* file)
 	char tmp[MAX];
 	snprintf(tmp, MAX, "%s%s", par->path, file);
 	struct fileDes* fd = newFileDes();
-	int len = readlink(tmp, fd->filename, strlen(fd->filename));
-	
-	fd->filename[len] = '\0';
+	int len = readlink(tmp, fd->filename, sizeof(fd->filename));
+	if(len == -1 ){
+		snprintf(fd->filename, sizeof(fd->filename), "%s %s", fd->filename, "(readlink: Permission denied)");
+	}
+	else{	
+		fd->filename[len] = '\0';
+	}
 	//printf("\t%s\n", fd->filename);
 	fdFillStatInfo(fd, tmp);
-	strncpy(fd->fd, file, strlen(file));
+	strncpy(fd->fd, file, sizeof(file));
 	return fd;
 }
-void fillDefaultChildren(struct Parent* par)
+void fillDefaultChildren(struct Parent* par, struct argTable* tb)
 {
 	struct fileDes* fd = defReadFile(par, "cwd");
-	addChild(par, fd);
+	if(!isFdValid(fd, tb)){free(fd);}
+	else{addChild(par, fd);}
 	fd = defReadFile(par, "root");
-	addChild(par, fd);
+	if(!isFdValid(fd, tb)){free(fd);}
+	else{addChild(par, fd);}
 	fd = defReadFile(par, "exe");
-	addChild(par, fd);
-}
+	if(!isFdValid(fd, tb)){free(fd);}
+	else{addChild(par, fd);}
 
-void fillMem(struct Parent* par)
+}
+void checkMemfileDeleted(struct fileDes* fd)
+{
+	if(strstr(fd->filename, "(deleted)") == NULL){
+		return;	
+	}
+	strncpy(fd->fd, "del", sizeof(fd->fd));
+}
+void fillMem(struct Parent* par, struct argTable* tb)
 {
 	char tmp[MAX], line[MAX], a[MAX];	
 	unsigned long from, to, pgoff, major, minor, flags;
 	unsigned int ino;
 	snprintf(tmp, MAX, "%s%s", par->path, "maps");
 	FILE* fp = fopen(tmp, "r");
-	if(fp != NULL){printf("Opened %s\n", tmp);}
+	if(fp == NULL){return;}
 	while(fgets(line, MAX-1, fp) != NULL){
 		struct fileDes* fd = newFileDes();
 		sscanf(line, "%x-%x %4c %x %x:%x %lu %s",
@@ -134,14 +149,23 @@ void fillMem(struct Parent* par)
 		fdFillStatInfo(fd, fd->filename);
 		strncpy(fd->fd, "mem", sizeof(fd->fd));
 		strncpy(fd->type, "REG", sizeof(fd->type));
-		printf("MEM process: %s %s %ld %s\n", fd->fd,fd->type ,fd->inode, fd->filename);
+		checkMemfileDeleted(fd);
+
+		if(!isFdValid(fd, tb)){
+			free(fd);	
+			continue;
+		}
+	
 		addChild(par, fd);
 	}	
 }
 void fdFillStatInfo(struct fileDes* fdes, const char* path)
 {
 	struct stat st;
-	if((stat(path, &st)) == -1){return;}
+	if((stat(path, &st)) == -1){
+		snprintf(fdes->type, MIN, "unknown");			
+		return;
+	}
 		// File inode
 		fdes->inode = st.st_ino;
 
@@ -162,22 +186,52 @@ void fdFillStatInfo(struct fileDes* fdes, const char* path)
 			strncpy(fdes->type, "unknown", 8);	
 		}	
 }
+void fdFillFdInfo(struct fileDes* fd, const char* path, const char* fdname)
+{
+	struct stat st;
+	char perm;
+	int filedes = open(path, O_RDONLY);
+	if(filedes == -1){
+		snprintf(fd->type, MIN, "unknown");;
+		return;
+	}
+	//printf("\tOpening %s", path);
+	//printf("\t\t%d\n", filedes);
+	int read = 0, write = 0;
+	fstat(filedes, &st);
+	if(st.st_mode & S_IRUSR){
+		perm = 'r';	read = 1;
+	}if(st.st_mode & S_IWUSR){
+		perm = 'w'; write = 1;
+	}if(read && write){
+		perm = 'u';
+	}
+	snprintf(fd->fd, sizeof(fd->fd), "%s%c", fdname, perm);
+	//printf("access: %s\n", fd->fd);
+	close(filedes);
+}
 // TODO: Check for the matching regexes in children as well
+// - Also check why we're printing some weird info
 void fillChildren(struct Parent* par, struct argTable* tb)
 {
-	fillDefaultChildren(par);
-	fillMem(par);
+	// The exe, root, cwd, and mem children
+	fillDefaultChildren(par, tb);
+	fillMem(par, tb);
 	char fdPath[MAX];	
 	DIR *fdDir;
 	struct dirent* fd;
 	struct stat st;
 	snprintf(fdPath, MAX, "%s%s", par->path, "fd");
-	if((fdDir = opendir(fdPath)) == NULL){
-		// TODO: If cant' open /fd have to mark child as empty, not just print error
-		perror("open");	
+	// How to check if this failed due to permission?
+	if((fdDir = opendir(fdPath)) == NULL ){
+		struct fileDes* fdes = newFileDes();	
+		strncpy(fdes->fd, "NOFD", sizeof(fdes->fd));	
+		snprintf(fdes->filename, sizeof(fdes->filename)-1, "%s %s", fdPath, "(opendir: Permission denied)");
+		addChild(par, fdes);
 		return;
 	}
 	
+	// The fd's in the /fd subdir	
 	while((fd = readdir(fdDir)) != NULL){
 	
 		if((atoi(fd->d_name)) == 0){continue;}
@@ -191,13 +245,14 @@ void fillChildren(struct Parent* par, struct argTable* tb)
 		
 		fillChildFilename(par, fdes, atoi(fd->d_name));
 		// Check if the entry matches cmdline args
-		
+		fdFillFdInfo(fdes, fdPath, fd->d_name);	
 		if(!isFdValid(fdes, tb)){
+			//printf("\tNOT including %s %s %s\n", par->command, fdes->type, fdes->filename);
 			free(fdes);	
 			continue;	
 		}
-		
-		//printf("%s %ld %ld file: %s is valid\n", par->command, par->pid, fdes->inode, fdes->filename);
+		//printf("\tINCLUDING %s %s %s\n", par->command, fdes->type, fdes->filename);
+		printf("Adding Child: %s\n", fdes->filename);
 		addChild(par, fdes);
 	}
 
@@ -208,7 +263,8 @@ void fillParent(struct Parent* parent, struct argTable* tb)
 	snprintf(statFile, MAX, "/proc/%d/comm", parent->pid);
 	FILE* fp = fopen(statFile, "r");
 	if(fp == NULL){
-		perror("open");
+		//perror("open");
+		return;
 	}
 	fscanf(fp, "%s", parent->command);
 	pGetUser(parent);
@@ -232,14 +288,23 @@ int isFdValid(struct fileDes* fd, struct argTable* tb)
 	while(sent != NULL){
 		if(sent->t){
 			flagt = !regexec(&sent->regex, fd->type, 0, NULL, 0);		
+			//printf("%s and type %s match: %d\n", sent->opt, fd->type, flagt);
 		}
 		if(sent->f){
 			flagf = !regexec(&sent->regex, fd->filename, 0, NULL, 0);	
+			//printf("%s and type %s match: %d\n", sent->opt, fd->filename, flagf);
 		}
 		sent = sent->next;	
 	}
 
 	return (flagt && flagf);
+}
+void printProcChildren(struct Parent* par){
+	struct fileDes* sent = par->tail;
+	while(sent != NULL){
+		//printf("\t%s passed\n", sent->filename);	
+		sent = sent->next;
+	}
 }
 int fillEntry(struct Parent* parent, DIR* dir, struct argTable* tb)
 {	
@@ -250,8 +315,9 @@ int fillEntry(struct Parent* parent, DIR* dir, struct argTable* tb)
 		free(parent);
 		return 0;
 	}
-	
+	//printf("%s made it through\n", parent->command);	
 	fillChildren(parent, tb);
+
 	return 1;
 }
 // Start the head and print all the children
@@ -276,7 +342,7 @@ void printChildren(struct Parent* par)
 }
 void printTable(struct Table* tb)
 {
-	printf("COMMAND PID USER TYPE NODE NAME\n");
+	//printf("COMMAND PID USER TYPE NODE NAME\n");
 	struct Parent* sent = tb->head;
 	while(sent != NULL){
 		printChildren(sent);

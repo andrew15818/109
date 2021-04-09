@@ -9,13 +9,14 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <regex.h>
+#include <fcntl.h>
+#include <string.h>
 
 #include "opts.h"
 #define MAX 250
 #define MED 20
 #define MIN 10
 struct fileDes{
-	
 	size_t inode;
 	char fd[MIN];	
 	char type[MIN];
@@ -48,11 +49,13 @@ int isFdValid(struct fileDes*, struct argTable*);
 void addPathName(char*, const char*, const char*);
 void pGetUser(struct Parent*);
 void fdFillStatInfo(struct fileDes*, const char*);
+void fdFillFdInfo(struct fileDes* fd, const char*, const char*);
 int fillEntry(struct Parent*, DIR* dir, struct argTable*); 
 void fillParent(struct Parent*, struct argTable*);
-void fillMem(struct Parent* par);
+void fillMem(struct Parent* par, struct argTable*);
+void checkMemfileDeleted(struct fileDes*);
 struct fileDes* defReadFile(struct Parent*, const char*);
-void fillDefaultChildren(struct Parent*);
+void fillDefaultChildren(struct Parent*, struct argTable*);
 void fillChildren(struct Parent*, struct argTable*);
 void fillChildFilename(struct Parent*, struct fileDes*, size_t);
 void printChildren(struct Parent*);

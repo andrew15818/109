@@ -4,9 +4,17 @@ TODO:
 1. Handle the optional regular expressions to filter the output.
 2. Get the FD.
 3. Get the correct info for type of FD. Remember the info has to be:
-- 
-
-We need to work closely with `/proc` to find the details on any process.
+- cwd
+- root
+- exe
+- mem
+- del 
+4. Handle the regular expressions. In `opts.c` we have to make a different
+one for each possible option `-t -c -f`, and then compile them. When we are 
+checking a record in `entry.c`, we first have to check if the expression matches
+and only then include it.
+We could make another function that just returns a 1 or 0 depending on the validity of the 
+entry, and just continue if it's not valid?
 
 For example, we need to see the `proc/<PID>/fd` to see what files the process
 has open. We need to make an entry for each of those files.

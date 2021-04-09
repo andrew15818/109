@@ -43,25 +43,25 @@ void parseOptions(struct argTable* tb, int argc, char** argv)
 				cmd->t = 1;
 				strncpy(cmd->opt, optarg, MAX);
 				regcomp(&cmd->regex, cmd->opt, REG_EXTENDED);
-				printf("Option -%c with opt %s\n", ch, cmd->opt);
+				//printf("Option -%c with opt %s\n", ch, cmd->opt);
 				break;
 			
 			case 'f':
 				cmd->f = 1;
 				strncpy(cmd->opt, optarg, sizeof(cmd->opt));	
 				regcomp(&cmd->regex, cmd->opt, REG_EXTENDED);
-				printf("Option -%c with opt %s\n", ch, cmd->opt);
+				//printf("Option -%c with opt %s\n", ch, cmd->opt);
 				break;
 			case 'c':
 				cmd->c = 1;
 				strncpy(cmd->opt, optarg, sizeof(cmd->opt));	
-				printf("Option -%c with opt %s\n", ch, cmd->opt);
+				//printf("Option -%c with opt %s\n", ch, cmd->opt);
 				regcomp(&cmd->regex, cmd->opt, REG_EXTENDED);
 				break;
 			case '?':
 			case ':':
 			default:
-				printf("IN the switch\n");	
+				//printf("IN the switch\n");	
 				break;
 		}
 	}
