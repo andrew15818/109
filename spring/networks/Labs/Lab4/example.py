@@ -94,7 +94,5 @@ def config(r1, r2, BRG1, BRGr, h1, GWr):
     BRGr.cmd('ip link set br0 up')
     
 
-
-
 if __name__ == '__main__':
     topology()
