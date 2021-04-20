@@ -12,4 +12,5 @@ textbooks/
 
 *.bak
 
-unix_prog/
+spring/unix/unix_prog/*
+spring/unix/textbook/*
