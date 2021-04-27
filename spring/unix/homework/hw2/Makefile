@@ -1,13 +1,16 @@
 CC = gcc
 CCX = g++
 FLAGS = -g -c 
-TARG = hw2
-OBJS = hw2.o
+OBJS = args.o
+TARGET = logger.so
+LDFLAGS = -shared -fPIC 
 
-hw2: $(OBJS)
+all: $(TARGET)
 
-%.o: %.c
+$(TARGET): $(OBJS)
+	$(CC) -o $@ $(LDFLAGS) logger.c -ldl
+
+%.o:%.c
 	$(CC) $(FLAGS) -o $@ $<
-
 clean:
-	rm -f ~* $(OBJS) $(TARG)
+	rm -f ~* $(OBJS) logger.so
