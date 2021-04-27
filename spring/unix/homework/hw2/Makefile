@@ -13,4 +13,4 @@ $(TARGET): $(OBJS)
 %.o:%.c
 	$(CC) $(FLAGS) -o $@ $<
 clean:
-	rm -f ~* $(OBJS) logger.so
+	rm -f ~* $(OBJS) logger.so logger.o
