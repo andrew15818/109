@@ -1,4 +1,5 @@
 *.o
 
 hw2
-tmp.txt
+*.txt
+sample

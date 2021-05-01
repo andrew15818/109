@@ -5,7 +5,10 @@ OBJS = args.o
 TARGET = logger.so
 LDFLAGS = -shared -fPIC 
 
-all: $(TARGET)
+all: $(TARGET) sample
+
+sample: sample.c
+	$(CC) -o $@ $<
 
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $(LDFLAGS) logger.c -ldl
