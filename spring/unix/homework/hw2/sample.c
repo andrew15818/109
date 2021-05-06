@@ -3,23 +3,24 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <string.h>
 int main(){
-	int fd = open("README.md", O_RDONLY, 0644);
-	chmod("README.md", 0644);
-	printf("You got chmoded.\n");
-	char buf[100];
-	read(fd, buf, 90);
-	printf("read done.\n");
-	uid_t uid = getuid();
-	gid_t gid = getgid();
-	chown("README.md",uid, gid);
-	printf("You just got chowned.\n");
 	
-	remove("tmp.txt");
-	printf("remove done.\n");
+	int res = creat("./tmp.txt", O_WRONLY|O_RDONLY);		
+	chmod("tmp.txt", O_WRONLY );
+
+	gid_t gid = getgid();
+	uid_t uid = getuid();
+	chown("tmp.txt", uid, gid);
+	rename("tmp.txt", "hola.txt");
+	int fd = open("hola.txt", 1101, 438);
+	write(fd,"wwww", 4);
 	close(fd);
-	printf("closed.\n");
-	creat("./hola.txt", O_WRONLY | O_RDONLY );
-	rename("hola.txt", "adios.txt");
+	fd = open("hola.txt", 000, 000);
+	FILE* fp = tmpfile();
+	fwrite("Hellow!", 1, 7, fp);
+	write(fd, "hola", 4);
+	remove("hola.txt");
+	fclose(fp);
 	return 0;
 }

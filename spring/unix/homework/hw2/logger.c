@@ -83,7 +83,7 @@ int chmod(const char* path, mode_t mode)
 		return 0;	
 	}
 	res = old_chmod(path, mode);
-	printf("[logger] chmod(\"%s\", %o) = %d\n", 
+	fprintf(stderr,"[logger] chmod(\"%s\", %o) = %d\n", 
 			buf, mode, res);
 	return res;
 }
@@ -97,7 +97,7 @@ int close(int filedes)
 	old_close = getOrigFuncPtr("close");	
 	res = old_close(filedes);
 
-	printf("[logger] close(\"%s\") = %d\n", path, res);
+	fprintf(stderr,"[logger] close(\"%s\") = %d\n", path, res);
 	return res;
 }
 int open(const char* path, int oflags, mode_t mode)
@@ -106,10 +106,10 @@ int open(const char* path, int oflags, mode_t mode)
 	int res;
 	handlePathName(path, buf);
 	int (*old_open)(const char*, int , mode_t) = NULL;
-	old_open = getOrigFuncPtr("open");
+	old_open = getOrigFuncPtr("open64");
 
 	res = old_open(path, oflags, mode);	
-	printf("[logger] open(\"%s\", %d, %o) = %d\n", buf, oflags, mode, res);
+	fprintf(stderr,"[logger] open(\"%s\", %d, %o) = %d\n", buf, oflags, mode, res);
 	return res;
 }
 int chown(const char* path, uid_t owner, gid_t group)
@@ -124,7 +124,7 @@ int chown(const char* path, uid_t owner, gid_t group)
 		return -1;
 	}
 	res = old_chown(path, owner, group);
-	printf("[logger] chown(\"%s\", %o, %o) = %d\n",
+	fprintf(stderr,"[logger] chown(\"%s\", %o, %o) = %d\n",
 					buf, owner, group, res);
 	return res;
 }
@@ -140,7 +140,7 @@ ssize_t read(int fd, void* buf, size_t nbyte)
 		return -1;
 	}
 	res = old_read(fd, buf, nbyte);
-	printf("[logger] read(\"%s\", \"%s\", %d) = %d\n", 
+	fprintf(stderr,"[logger] read(\"%s\", \"%s\", %d) = %d\n", 
 			sympath, buf, nbyte, res);
 	return res;
 }
@@ -156,7 +156,7 @@ int remove(const char* filename)
 		return -1;
 	}
 	res = old_remove(filename);
-	printf("[logger] remove(\"%s\") = %d\n", buf, res);
+	fprintf(stderr,"[logger] remove(\"%s\") = %d\n", buf, res);
 	return res;
 }
 int creat(const char* path, mode_t mode)
@@ -166,7 +166,7 @@ int creat(const char* path, mode_t mode)
 	 int res;
 
 	 handlePathName(path, fullpath);
-	 old_creat = getOrigFuncPtr("creat");
+	 old_creat = getOrigFuncPtr("creat64");
 	 if(old_creat == NULL){
 		perror("creat");
 		return -1; 
@@ -178,7 +178,7 @@ int creat(const char* path, mode_t mode)
 int rename(const char* old_filename, const char* new_filename)
 {
 	char old_buf[PATH_MAX], new_buf[PATH_MAX];
-	int (*old_rename)(const char*, const char*);
+	int (*old_rename)(const char*, const char*) = NULL;
 	int res;
 	handlePathName(old_filename, old_buf);
 	handlePathName(new_filename, new_buf);
@@ -188,26 +188,128 @@ int rename(const char* old_filename, const char* new_filename)
 		return -1;	
 	}
 	res = old_rename(old_buf, new_buf);	
-	printf("[logger], rename(\"%s\", \"%s\") = %d\n", old_buf, new_buf, res);
+	fprintf(stderr,"[logger] rename(\"%s\", \"%s\") = %d\n", old_buf, new_buf, res);
 	return res;	
 }
 int fclose(FILE* stream)
 {
 	char buf[PATH_MAX];
 	int res;
-	int (*old_fclose)(FILE*);
+	int (*old_fclose)(FILE*) = NULL;
 
 	paramFp(stream, buf, PATH_MAX);
-	printf("Finna close %s\n", buf);
 	old_fclose = getOrigFuncPtr("fclose");
 	if(old_fclose == NULL){
 		perror("fclose");	
 		return -1;
 	}
-	printf("[logger] fclose(\"%s\") = %d\n", buf, res);
+	fprintf(stderr,"[logger] fclose(\"%s\") = %d\n", buf, res);
 	return res;
 }
 FILE* fopen(const char* filename, const char* mode)
 {
+	char buf[PATH_MAX];	
+	// we can't change function signature, so I'll just 
+	// copy the array.
+	char mode_cut[BUFLEN + 1];
+	strncpy(mode_cut, mode, strlen(mode));
+	mode_cut[strlen(mode)] = '\0';
+	FILE* (*old_fopen)(const char* filename, const char* mode) = NULL;
+	FILE *res;
+	handlePathName(filename, buf);
+	checkPrintableChars(mode_cut, BUFLEN+1);
+	old_fopen = getOrigFuncPtr("fopen64");
+	if(old_fopen == NULL){
+		perror("fopen");	
+		return NULL;
+	}
+	res = old_fopen(buf, mode);
+	fprintf(stderr,"[logger] fopen(\"%s\", \"%s\") = %p\n", buf, mode_cut, res);
 
+	return res;
 }
+FILE *tmpfile(void)
+{
+	FILE* (*old_tmpfile)(void) = NULL;
+	FILE* res = NULL;
+	old_tmpfile = getOrigFuncPtr("tmpfile64");
+	res = old_tmpfile();
+	fprintf(stderr,"[logger] tmpfile() = %p\n", res);
+	return res;
+}
+ssize_t write(int filedes, const void* buf, size_t n_bytes)
+{
+	ssize_t (*old_write)(int, const void*, size_t);
+	ssize_t res;
+	char fdSymlink[PATH_MAX];
+	char bufCut[BUFLEN + 1];
+
+	readFdSymlink(filedes, fdSymlink, PATH_MAX);
+	strncpy(bufCut, buf, n_bytes);
+
+	old_write = getOrigFuncPtr("write");
+	if(old_write == NULL){
+		perror("write");	
+		return -1;
+	}
+	res = old_write(filedes, bufCut, n_bytes);
+	printf("[logger] write(\"%s\", \"%s\", %zd) = %zd\n", 
+					fdSymlink, buf, n_bytes, res);
+	return res;
+}
+size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream)
+{
+	size_t (*old_fread)(void*, size_t, size_t, FILE*);
+	size_t res;
+	char fpName[PATH_MAX];	
+	paramFp(stream, fpName, PATH_MAX);
+	old_fread = getOrigFuncPtr("fread");
+	if(old_fread == NULL){
+		perror("fread64");
+		return -1;	
+	}
+	res = old_fread(ptr, size, nmemb, stream);
+	printf("[logger] fread(\"%s\", %zu, %zu, \"%s\") = %zu\n",
+					ptr, size, nmemb, fpName, res);
+	return res;
+}
+size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE* stream)
+{
+	size_t (*old_fwrite)(const void*, size_t, size_t, FILE*);
+	size_t res;
+	char fpName[PATH_MAX];
+	paramFp(stream, fpName, PATH_MAX);
+	old_fwrite = getOrigFuncPtr("fwrite");
+	if(old_fwrite == NULL){
+		perror("fwrite");	
+		return -1;
+	}
+	res = old_fwrite(ptr, size, nmemb, stream);	
+	printf("[logger] fwrite(\"%s\", %zu, %zu, \"%s\") = %d\n",
+					ptr, size, nmemb, fpName, res);
+	return res;
+}
+// TODO: handle the 64-bit open fopen64!
+//int open64(const char* path, int oflags, mode_t mode){
+//	int (*old_open64)(const char*, int, mode_t);
+//	int res;
+//	char buf[PATH_MAX];
+//	handlePathName(path, buf);	
+//	old_open64 = getOrigFuncPtr("open64");		
+//	if(old_open64 == NULL){perror("open64");}
+//	res = old_open64(path, oflags, mode);
+//	printf("[logger] open64(\"%s\", %d, %o) = %d\n", 
+//					path, oflags, mode, res );
+//	return res;
+//}
+/*
+size_t fread64(void* ptr, size_t size, size_t nmemb, FILE* stream)
+{
+	size_t (*old_fread64)(void*, size_t, size_t, FILE*);
+	size_t res;
+	char fpName[PATH_MAX]; 
+	paramFp(stream, fpName, PATH_MAX);
+
+	return res;
+}
+*/
