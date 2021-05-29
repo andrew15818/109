@@ -1,4 +1,6 @@
 #include "libmini.h"
 int main(){
-	return -1;
+	alarm(3);
+	pause();
+	return 0;
 }

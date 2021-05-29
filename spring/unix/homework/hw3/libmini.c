@@ -1,5 +1,5 @@
 #include "libmini.h"
 
-unsigned int alarm(unsigned int seconds){
-	return seconds;
+void exit(int error code){
+	int ret = sys_exit();
 }
