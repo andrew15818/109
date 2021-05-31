@@ -129,6 +129,7 @@ extern long errno;
 #define SIGWINCH	28
 #define SIGIO		29
 #define SIGPOLL		SIGIO
+#define SIGNUM 		30
 
 #define	SA_NOCLDSTOP  1		 /* Don't send SIGCHLD when children stop.  */
 #define SA_NOCLDWAIT  2		 /* Don't create zombie on child death.  */
@@ -159,26 +160,33 @@ struct timezone {
 	int	tz_minuteswest;	/* minutes west of Greenwich */
 	int	tz_dsttime;	/* type of DST correction */
 };
-struct sigset_t{
-
+/*From /usr/include/bits/types/__sigset_t.h */
+typedef struct sigset_t {
+	// just store all as 0?
+	int val[SIGNUM];
+} sigset_t;
+/*From /usr/include/asm/siginfo.h */
+struct siginfo_t {
+	int si_signo; //signal number	
+	int si_code;
+	int si_errno;
 };
-struct jmp_buf_s {
+struct jmp_buf {
 	long long reg[8];
-	sigset_t mask;	
-} jmp_buf_s[1];
+	struct sigset_t mask;	
+} jmp_buf[1];
 
 struct sigaction {
 	void (*sa_handler)(int);
-	void (*sa_sigaction)(int, siginfo_t *, void*);
-	sigset_t sa_mask;
+	void (*sa_sigaction)(int, struct siginfo_t *, void*);
+	struct sigset_t sa_mask;
 	int sa_flags;
 	void (*sa_restorer)(void);
 };
 
-struct sigset_t {
-
-};
 /* system calls */
+long sys_alarm(unsigned int seconds);
+long sys_signal(int sig, void* handler);
 long sys_read(int fd, char *buf, size_t count);
 long sys_write(int fd, const void *buf, size_t count);
 long sys_open(const char *filename, int flags, ... /*mode*/);
@@ -214,11 +222,13 @@ long sys_geteuid();
 long sys_getegid();
 
 /* wrappers */
-int setjmp(struct jmp_buf_s env);
-void longjmp(struct jmp_buf_s env, int value);
+unsigned int alarm(unsigned int seconds);
+int setjmp(struct jmp_buf env);
+void longjmp(struct jmp_buf env, int value);
 void (*signal(int sig, void (*func)(int)))(int);
-int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);
-int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
+long sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);
+int sigprocmask(int how, const struct sigset_t *set, struct sigset_t *oldset);
+int sigemtpyset(sigset_t *set);
 ssize_t	read(int fd, char *buf, size_t count);
 ssize_t	write(int fd, const void *buf, size_t count);
 int	open(const char *filename, int flags, ... /*mode*/);

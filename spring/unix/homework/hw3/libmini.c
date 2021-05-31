@@ -8,6 +8,30 @@ unsigned int alarm(unsigned int seconds){
 	unsigned int ret = sys_alarm(seconds);
 	WRAPPER_RETval(unsigned int);
 }
+/* 1. Save the current CPU state
+ * 2. Save the current signal mask*/
+int setjmp(struct jmp_buf env){
+	return 1;
+}
+void (*signal(int sig, void (*func)(int)))(int){
+	
+}
+int sigsetempty(sigset_t* set){
+	if(set == NULL){
+		return -1;	
+	}
+	for(int i=0; i<SIGNUM; i++){
+		set->val[i] = 0;	
+	}
+	return 0;
+}
+/*
+long sigaction(int signum, const struct sigaction *act, struct sigaction *oldact){
+	act->sa_flags |= SA_RESTORER;
+	act->sa_restorer;
+	ret = sys_rt_sigaction(signum, act, oldact, sizeof(struct sigset_t));
+}
+*/
 ssize_t	read(int fd, char *buf, size_t count) {
 	long ret = sys_read(fd, buf, count);
 	WRAPPER_RETval(ssize_t);
