@@ -24,11 +24,15 @@ extern	errno
 	gensys   9, mmap
 	gensys  10, mprotect
 	gensys  11, munmap
+	gensys 	13, rt_sigaction
+	gensys 	14, rt_sigprocmask
+	gensys 	15, sigreturn
 	gensys  22, pipe
 	gensys  32, dup
 	gensys  33, dup2
 	gensys  34, pause
 	gensys  35, nanosleep
+	gensys  37, alarm
 	gensys  57, fork
 	gensys  60, exit
 	gensys  79, getcwd
@@ -50,8 +54,29 @@ extern	errno
 	gensys 106, setgid
 	gensys 107, geteuid
 	gensys 108, getegid
+	gensys 127, rt_sigpending
 
+	global setjmp:function
 	global open:function
+; store RBX, RSP, RBP, R12, R13, R14, R15
+;setjmp:
+;;
+;	push rbp 			; remember stack frame pointer
+;;	mov 24[rbp], rsp
+;	mov rbp, rsp 		; move our stack pointer to sf pointer
+;	mov QWORD [rdi], rbx
+;;
+;;	;mov 8[rbp], rbx
+;;	mov 16[rbp], rbx
+;;	mov 32[rbp], rbp
+;;	mov 40[rbp], r12
+;;	mov 48[rbp], r13
+;;	mov 56[rbp], r14
+;;	mov 64[rbp], r15
+;;		
+;	mov rsp, rbp
+;;	pop rbp
+;	ret
 open:
 	call	sys_open
 	cmp	rax, 0

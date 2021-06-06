@@ -18,11 +18,11 @@ by macros in Assembly, but I'm guessing most of ours will have to be done by han
 How do we save the CPU state? Do we just push all the things onto the stack?
 1. `setjmp`: Here we set the stage for the `longjmp` by saving the current CPU state. We also have to 
 preserve the signal mask, which is not part of the original syscall.  
-2. `longjmp`: restore the preserved CPU state and signal mask.
+2. `longjmp`: restore the preserved CPU state and signal mask, the signal mask is the same we saved in setjmp.
 3. `signal, sigaction`: setup the signal handler 
 4. `sigprocmask`: block/unblock signal and set the current signal mask.
 5. `sigpending`: check if there is any pending signal.
-6. `alarm`: setup a timer for the current process 
+6. `alarm`: setup a timer for the current process, then send SIGALRM signal
 7. various functions that handle `sigset_t`: `sigemptyset, sigfillset, sigaddset, sigdelset, sigismember`.  
 
 ## Concerns:
@@ -51,6 +51,19 @@ These registers point to different segments of the program.
 
 ## EFlags
 This register is 32 bits and stores the state of the CPU. 
+
+## Initialized Data (Data section)
+- db BYTE
+- dw WORD 2 bytes,
+- dd DWORD 4 bytes
+- dq QWORD 8-bytes
+- dt tbyte 10 byte
+- ddq dqword 16-byte
+- do same as ddq
+Floating point:
+- dd single precision (4 bytes)
+- dq double precision (8 bytes)
+- dt extended precision (10 bytes)
 
 AH and AL have 8 bits each, since they are the upper and lower half.
 The R means the register is 64 bits, E means 32 bits, and no prefix means 16 bits.

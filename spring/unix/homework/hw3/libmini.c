@@ -8,29 +8,123 @@ unsigned int alarm(unsigned int seconds){
 	unsigned int ret = sys_alarm(seconds);
 	WRAPPER_RETval(unsigned int);
 }
-/* 1. Save the current CPU state
- * 2. Save the current signal mask*/
-int setjmp(struct jmp_buf env){
-	return 1;
+
+// restore function for sigaction
+void sa_restorer();
+__asm__("sa_restorer:\n mov $15, %rax\n syscall");
+
+void longjmp(struct jmp_buf env, int value){
+	return;
+	//__asm__(
+	//	"cmp %rbp), 0\n"
+	//	"ret\n"					
+	//);
 }
-void (*signal(int sig, void (*func)(int)))(int){
-	
-}
-int sigsetempty(sigset_t* set){
-	if(set == NULL){
+// This function is mostly a wrapper to a rt_sigaction call
+__sighandler_t signal(int signum, __sighandler_t handler){
+	struct sigaction act, oact;
+	act.sa_handler = handler;
+	sigemptyset(&act.sa_mask);
+	//act.sa_flags |= signum;
+	long ret = sigaction(signum, &act, &oact);
+	// Error in setting signal
+	if(ret < 0){
 		return -1;	
 	}
-	for(int i=0; i<SIGNUM; i++){
-		set->val[i] = 0;	
-	}
+	//return the old disposition of signal
+	ret = (long)oact.sa_handler;
+	WRAPPER_RETptr(__sighandler_t);
+}
+// need to define this here b/c need to store signal mask
+__attribute__((noinline, noclone, returns_twice, optimize(0)))
+int setjmp(struct jmp_buf env){
+	//"mov %rsp, %rbp\n"
+	//__asm__(		
+	//	"mov %rbx, 16(%rbp)\n"
+	//	//"lea 24%(%rsp), %rbp\n"
+	//	"mov %rbp, 32(%rbp)\n"
+	//	"mov %r12, 40(%rbp)\n"
+	//	"mov %r13, 48(%rbp)\n"
+	//	"mov %r14, 56(%rbp)\n"
+	//////	"mov %r15, 64(%rbp)\n"
+	//////	"mov %rax, (%rbp)\n" //rip location?
+	//);	
+	__asm__(
+		" 	mov %rbx, 8(%rdi)\n"
+	);
+	sigprocmask(SIG_UNBLOCK, NULL, &env.mask);
 	return 0;
 }
-/*
-long sigaction(int signum, const struct sigaction *act, struct sigaction *oldact){
-	act->sa_flags |= SA_RESTORER;
-	act->sa_restorer;
-	ret = sys_rt_sigaction(signum, act, oldact, sizeof(struct sigset_t));
+long sigaction(int signum, struct sigaction *act, struct sigaction *oldact){		
+	// Just set the sigaction 
+	struct k_sigaction tmpnew, tmpold;
+	long ret = -EINVAL;
+	if(act){
+		tmpnew.sa_mask = act->sa_mask;
+		tmpnew.sa_handler = act->sa_handler;
+		tmpnew.sa_flags = act->sa_flags = act->sa_flags | SA_RESTORER;
+		tmpnew.sa_restorer = act->sa_restorer = &sa_restorer;
+	}
+	// To call the sysaction need to implement the kernel data structure
+	ret = sys_rt_sigaction(signum, act ? &tmpnew: NULL, oldact ?  &tmpold: NULL, sizeof(sigset_t));
+
+	//return 1;
+	if(!ret && oldact){
+		write(1, "Hooray!\n", 8);	
+		oldact->sa_handler = tmpold.sa_handler;
+		oldact->sa_mask = tmpold.sa_mask;
+		oldact->sa_flags = tmpold.sa_flags;
+		oldact->sa_restorer = tmpold.sa_restorer;
+	}
+	WRAPPER_RETval(long);
 }
+int sigprocmask(int how, const sigset_t* set, sigset_t* oldset){
+	long ret = sys_rt_sigprocmask(how, set, oldset, sizeof(sigset_t));
+	WRAPPER_RETval(int);
+}
+int sigemptyset(sigset_t* set){
+	// Check the error condition
+	if(*set < 0){
+		return -1;	
+	}
+	 *set = *set & 0;
+	return 0;
+}
+int sigaddset(sigset_t* set, int signum){
+	if(*set < 0 || signum < 0 || signum > SIGNUM){
+		return -1;	
+	}
+	// shift left signum-1 times, then or the corresponding bit
+	*set |= (1UL << (signum -1));
+	return 0;
+}
+int sigfillset(sigset_t* set){
+	if(*set < 0){
+		return -1;	
+	}
+	// ~0 is going to be all ones
+	*set |= ~0;
+	return 0;
+}
+int sigdelset(sigset_t* set, int signum){
+	if(*set < 0 || signum < 0 || signum > SIGNUM){
+		return -1;	
+	}
+	*set &= ~(1UL << (signum - 1));
+	return 0;
+}
+int sigismember(sigset_t* set, int signum){
+	if(*set < 0|| signum < 0 || signum >= SIGNUM){
+		return -1;	
+	}
+	return *(set) & (1UL << (signum -1))?1:0;
+}
+int sigpending(sigset_t* set){
+	long ret = sys_rt_sigpending(set, sizeof(sigset_t));
+	WRAPPER_RETval(int);
+}
+/*
+
 */
 ssize_t	read(int fd, char *buf, size_t count) {
 	long ret = sys_read(fd, buf, count);
@@ -85,7 +179,7 @@ int	pause() {
 }
 
 int	nanosleep(struct timespec *rqtp, struct timespec *rmtp) {
-	long ret = nanosleep(rqtp, rmtp);
+	long ret = sys_nanosleep(rqtp, rmtp);
 	WRAPPER_RETval(int);
 }
 
