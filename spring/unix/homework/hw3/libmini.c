@@ -13,13 +13,7 @@ unsigned int alarm(unsigned int seconds){
 void sa_restorer();
 __asm__("sa_restorer:\n mov $15, %rax\n syscall");
 
-void longjmp(struct jmp_buf env, int value){
-	return;
-	//__asm__(
-	//	"cmp %rbp), 0\n"
-	//	"ret\n"					
-	//);
-}
+
 // This function is mostly a wrapper to a rt_sigaction call
 __sighandler_t signal(int signum, __sighandler_t handler){
 	struct sigaction act, oact;
@@ -35,24 +29,52 @@ __sighandler_t signal(int signum, __sighandler_t handler){
 	ret = (long)oact.sa_handler;
 	WRAPPER_RETptr(__sighandler_t);
 }
+// restore values in env to registers
+__attribute__((noinline, noclone, optimize(0)))
+void longjmp(jmp_buf env, int value){
+
+	sigprocmask(SIG_BLOCK, &env->mask, NULL);
+	// if val is zero, set to one
+	__asm__(
+		"push %rdi\n"
+		"push %rsi\n"
+	);
+		__asm__(
+			"pop %rsi\n"
+			"pop %rdi\n"
+			//"	mov %rsi, %rax\n"
+			//"	cmp 1, %rax\n"
+			//"	jnz restore\n"
+			//"	inc %rax\n"
+
+			//"restore:\n"
+		"		mov (%rsi), %rbx\n"
+		"		mov 8(%rsi), %rsp\n"
+		"		mov 16(%rsi), %rbp\n"
+		"		mov 24(%rsi), %r12\n"
+		"		mov 32(%rsi), %r13\n"
+		"		mov 40(%rsi), %r14\n"
+		"		mov 48(%rsi), %r15\n"
+		"		jmp *56(%rsi)\n"
+	);
+}
 // need to define this here b/c need to store signal mask
 __attribute__((noinline, noclone, returns_twice, optimize(0)))
-int setjmp(struct jmp_buf env){
-	//"mov %rsp, %rbp\n"
-	//__asm__(		
-	//	"mov %rbx, 16(%rbp)\n"
-	//	//"lea 24%(%rsp), %rbp\n"
-	//	"mov %rbp, 32(%rbp)\n"
-	//	"mov %r12, 40(%rbp)\n"
-	//	"mov %r13, 48(%rbp)\n"
-	//	"mov %r14, 56(%rbp)\n"
-	//////	"mov %r15, 64(%rbp)\n"
-	//////	"mov %rax, (%rbp)\n" //rip location?
-	//);	
+int setjmp(jmp_buf env){
+
 	__asm__(
-		" 	mov %rbx, 8(%rdi)\n"
+		"mov 8(%rbp), %rax\n" // second element of rbp is the return address
+		"mov %rbx, (%rdi)\n"
+		"mov %rbp, 16(%rdi)\n"
+		"mov %rsp, 8(%rdi)\n"	
+		"mov %r12, 24(%rdi)\n"
+		"mov %r13, 32(%rdi)\n"
+		"mov %r14, 40(%rdi)\n"
+		"mov %r15, 48(%rdi)\n"
+		"mov %rax, 56(%rdi)\n" // return address of caller
+
 	);
-	sigprocmask(SIG_UNBLOCK, NULL, &env.mask);
+	sigprocmask(SIG_UNBLOCK, NULL, &env->mask);
 	return 0;
 }
 long sigaction(int signum, struct sigaction *act, struct sigaction *oldact){		

@@ -2,8 +2,23 @@
 void printo(){
 	write(1, "WE returned!\n", 13);
 }
+typedef void (*proc_t)();
+static jmp_buf jb;
+#define FUNBODY(m, from) {write(1, m, strlen(m)); longjmp(jb, from);}
+
+void a() FUNBODY("This is function a().\n", 1);
+void b() FUNBODY("This is function b().\n", 2);
+void c() FUNBODY("This is function c().\n", 3);
+
 void handler(int s){}
+proc_t funs[] = {a, b, c};
 int main(){
+	volatile int i = 0;
+	if(setjmp(jb) != 0){
+		i++;
+	}
+	if (i < 3) funs[i]();
+	return 0;
 	//jmp1.c
 	/*
 	sigset_t s;
@@ -23,7 +38,7 @@ int main(){
 		write(1, m, sizeof(m));
 	}
 	*/
-	
+	/*	
 	struct jmp_buf s;
 	for(int i =0; i< 8; i++){
 		s.reg[i] = 1;	

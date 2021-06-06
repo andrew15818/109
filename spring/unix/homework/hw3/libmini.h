@@ -188,7 +188,7 @@ struct siginfo_t {
 	int si_code;
 	int si_errno;
 };
-struct jmp_buf {
+typedef struct Jmp_buf {
 	long long reg[8];
 	sigset_t mask;	
 } jmp_buf[1];
@@ -249,8 +249,8 @@ long sys_getegid();
 
 /* wrappers */
 unsigned int alarm(unsigned int seconds);
-int setjmp(struct jmp_buf env);
-void longjmp(struct jmp_buf env, int value);
+int setjmp(jmp_buf env);
+void longjmp(jmp_buf env, int value);
 //void (*signal(int sig, void (*func)(int)))(int);
 __sighandler_t signal(int signum, __sighandler_t handler);
 long sigaction(int signum, struct sigaction *act, struct sigaction *oldact);
