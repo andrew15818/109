@@ -32,31 +32,28 @@ __sighandler_t signal(int signum, __sighandler_t handler){
 // restore values in env to registers
 __attribute__((noinline, noclone, optimize(0)))
 void longjmp(jmp_buf env, int value){
-
-	sigprocmask(SIG_BLOCK, &env->mask, NULL);
+	
+	
 	// if val is zero, set to one
 	__asm__(
-		"push %rdi\n"
-		"push %rsi\n"
-	);
-		__asm__(
-			"pop %rsi\n"
-			"pop %rdi\n"
-			//"	mov %rsi, %rax\n"
-			//"	cmp 1, %rax\n"
-			//"	jnz restore\n"
-			//"	inc %rax\n"
+		"mov %rsi, %rax\n"
+		"test %rax, %rax\n" //test if value is zero
+		"jnz restore\n"
+		"inc %rax\n"
 
-			//"restore:\n"
-		"		mov (%rsi), %rbx\n"
-		"		mov 8(%rsi), %rsp\n"
-		"		mov 16(%rsi), %rbp\n"
-		"		mov 24(%rsi), %r12\n"
-		"		mov 32(%rsi), %r13\n"
-		"		mov 40(%rsi), %r14\n"
-		"		mov 48(%rsi), %r15\n"
-		"		jmp *56(%rsi)\n"
+		"restore: \n"
+		////" 		pop %rdi\n"
+		"		mov (%rdi), %rbx\n"
+		"		mov 8(%rdi), %rsp\n"
+		"		mov 16(%rdi), %rbp\n"
+		"		mov 24(%rdi), %r12\n"
+		"		mov 32(%rdi), %r13\n"
+		"		mov 40(%rdi), %r14\n"
+		"		mov 48(%rdi), %r15\n"
+		"		jmp *56(%rdi)\n"
 	);
+	// set env->mask to signal mask
+	sigprocmask(SIG_BLOCK, NULL, &env->mask);
 }
 // need to define this here b/c need to store signal mask
 __attribute__((noinline, noclone, returns_twice, optimize(0)))
@@ -72,7 +69,6 @@ int setjmp(jmp_buf env){
 		"mov %r14, 40(%rdi)\n"
 		"mov %r15, 48(%rdi)\n"
 		"mov %rax, 56(%rdi)\n" // return address of caller
-
 	);
 	sigprocmask(SIG_UNBLOCK, NULL, &env->mask);
 	return 0;
@@ -92,7 +88,6 @@ long sigaction(int signum, struct sigaction *act, struct sigaction *oldact){
 
 	//return 1;
 	if(!ret && oldact){
-		write(1, "Hooray!\n", 8);	
 		oldact->sa_handler = tmpold.sa_handler;
 		oldact->sa_mask = tmpold.sa_mask;
 		oldact->sa_flags = tmpold.sa_flags;
@@ -113,7 +108,7 @@ int sigemptyset(sigset_t* set){
 	return 0;
 }
 int sigaddset(sigset_t* set, int signum){
-	if(*set < 0 || signum < 0 || signum > SIGNUM){
+	if(*set < 0 || signum < 0 || signum > SIGNUM || set == NULL){
 		return -1;	
 	}
 	// shift left signum-1 times, then or the corresponding bit

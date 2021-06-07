@@ -5,7 +5,7 @@ ASM64 = yasm
 ASMFLAGS = -f elf64 -DYASM -D__x86_64__ -DPIC
 CFLAGS=-g -Wall -fno-stack-protector -nostdlib
 CFILE = libmini
-FILES = libmini.o test.o libmini64.o start.o libmini.so libmini.a test longjmp
+FILES = libmini.o test.o libmini64.o start.o libmini.so libmini.a test longjmp jmp2
 
 all: $(FILES)
 
@@ -30,8 +30,12 @@ longjmp: longjmp.o start.o
 test: test.o start.o
 	ld -m elf_x86_64 --dynamic-linker /lib64/ld-linux-x86-64.so.2 -o $@ $^ -L. -L.. -lmini
 
-jmp1: jmp1.o jmp1.o
+jmp1: jmp1.o start.o
 	ld -m elf_x86_64 --dynamic-linker /lib64/ld-linux-x86-64.so.2 -o $@ $^ -L. -L.. -lmini
+
+jmp2: jmp2.o start.o
+	ld -m elf_x86_64 --dynamic-linker /lib64/ld-linux-x86-64.so.2 -o $@ $^ -L. -L.. -lmini
+
 #%.o: %.asm 
 #	$(ASM64) $< -o $@
 #
@@ -39,4 +43,4 @@ jmp1: jmp1.o jmp1.o
 #	$(CC) $(CFLAGS) -I. -I.. -DUSEMINI test.c
 	
 clean:
-	rm -rf $(FILES) test
+	rm -rf $(FILES) *.o test

@@ -209,7 +209,7 @@ void sa_restorer();
 /* system calls */
 long sys_alarm(unsigned int seconds);
 long sys_sigreturn(unsigned long unused);
-long sys_rt_sigaction(int signum, const struct sigaction* act, struct sigaction* oact, int sigsetsize);
+long sys_rt_sigaction(int signum, const struct d_sigaction* act, struct k_sigaction* oact, int sigsetsize);
 long sys_rt_sigprocmask(int how, sigset_t* nset, sigset_t *oset, size_t sigsetsize);
 long sys_rt_sigpending(sigset_t* set, size_t sigsetsize);
 //long sys_signal(int sig, void* handler);
