@@ -20,10 +20,12 @@ int main(){
 		sigprocmask(0, NULL, &set_after_jmp);
 		if(sigismember(&set_after_jmp, SIGALRM)){
 			//PRINT("PASS: The sigmask is preserved.\n");	
-			PRINT("boopity \n");
+			char k[] = "pass\n";
+			write(1, k, strlen(k));
 		}else{
 			//PRINT("FAIL: The sigmask is not preserved.\n");		
-			PRINT("FAIL\n");
+			char j[] = "fail\n";
+			write(1, j, strlen(j));
 		}
 	}
 

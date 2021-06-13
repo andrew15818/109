@@ -23,26 +23,34 @@ __sighandler_t signal(int signum, __sighandler_t handler){
 	long ret = sigaction(signum, &act, &oact);
 	// Error in setting signal
 	if(ret < 0){
-		return -1;	
+		return SIG_ERR;	
 	}
 	//return the old disposition of signal
 	ret = (long)oact.sa_handler;
 	WRAPPER_RETptr(__sighandler_t);
 }
 // restore values in env to registers
-__attribute__((noinline, noclone, optimize(0)))
+//__attribute__((noinline, noclone, optimize(0)))
 void longjmp(jmp_buf env, int value){
 	
-	
+	//save arg registers before calling sigprocmask 
+	__asm__(
+		"push %rdi\n"					
+		"push %rsi\n"
+	);
+	// set the signal mask first so we can restore registers 
+	// before returning
+	sigprocmask(SIG_BLOCK, NULL, &env->mask);
 	// if val is zero, set to one
 	__asm__(
+		"pop %rsi\n"
+		"pop %rdi\n"
 		"mov %rsi, %rax\n"
 		"test %rax, %rax\n" //test if value is zero
 		"jnz restore\n"
 		"inc %rax\n"
-
+		// Defined in /source/arch/x86/um/setjmp_64.S
 		"restore: \n"
-		////" 		pop %rdi\n"
 		"		mov (%rdi), %rbx\n"
 		"		mov 8(%rdi), %rsp\n"
 		"		mov 16(%rdi), %rbp\n"
@@ -50,25 +58,28 @@ void longjmp(jmp_buf env, int value){
 		"		mov 32(%rdi), %r13\n"
 		"		mov 40(%rdi), %r14\n"
 		"		mov 48(%rdi), %r15\n"
-		"		jmp *56(%rdi)\n"
+		" 		mov 56(%rdi), %rcx\n"
+		"		jmp *%rcx\n"
 	);
 	// set env->mask to signal mask
-	sigprocmask(SIG_BLOCK, NULL, &env->mask);
+
 }
 // need to define this here b/c need to store signal mask
-__attribute__((noinline, noclone, returns_twice, optimize(0)))
+//__attribute__((noinline, noclone, returns_twice, optimize(0)))
 int setjmp(jmp_buf env){
 
-	__asm__(
+	__asm__(	
+		"mov (%rbp), %rax\n" //need to save rbp address 
+		"mov %rax, 16(%rdi)\n" // can't to mem mem operands
+
 		"mov 8(%rbp), %rax\n" // second element of rbp is the return address
-		"mov %rbx, (%rdi)\n"
-		"mov %rbp, 16(%rdi)\n"
+		"mov %rbx, (%rdi)\n"	
 		"mov %rsp, 8(%rdi)\n"	
 		"mov %r12, 24(%rdi)\n"
 		"mov %r13, 32(%rdi)\n"
 		"mov %r14, 40(%rdi)\n"
 		"mov %r15, 48(%rdi)\n"
-		"mov %rax, 56(%rdi)\n" // return address of caller
+		"mov %rax, 56(%rdi)\n" // return address of caller	
 	);
 	sigprocmask(SIG_UNBLOCK, NULL, &env->mask);
 	return 0;
@@ -130,7 +141,7 @@ int sigdelset(sigset_t* set, int signum){
 	*set &= ~(1UL << (signum - 1));
 	return 0;
 }
-int sigismember(sigset_t* set, int signum){
+int sigismember(const sigset_t* set, int signum){
 	if(*set < 0|| signum < 0 || signum >= SIGNUM){
 		return -1;	
 	}

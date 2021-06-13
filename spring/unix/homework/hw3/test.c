@@ -4,12 +4,12 @@ void printo(){
 }
 typedef void (*proc_t)();
 static jmp_buf jb;
-//#define FUNBODY(m, from) {write(1, m, strlen(m)); longjmp(jb, from);}
-//
-//void a() FUNBODY("This is function a().\n", 1);
-//void b() FUNBODY("This is function b().\n", 2);
-//void c() FUNBODY("This is function c().\n", 3);
-//proc_t funs[] = {a, b, c};
+#define FUNBODY(m, from) {write(1, m, strlen(m)); longjmp(jb, from);}
+
+void a() FUNBODY("This is function a().\n", 1);
+void b() FUNBODY("This is function b().\n", 2);
+void c() FUNBODY("This is function c().\n", 3);
+proc_t funs[] = {a, b, c};
 void handler(int s){}
 
 int main(){
@@ -20,7 +20,7 @@ int main(){
 	if (i < 3){
 		char m[] = "Supposed to be jumping back\n";
 		write(1, m, sizeof(m));
-		longjmp(jb/*, ++i*/);
+		longjmp(jb, ++i);
 	} 
 	return 0;
 	//jmp1.c
