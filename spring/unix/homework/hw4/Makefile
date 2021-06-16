@@ -1,8 +1,8 @@
 CC = gcc
-PROGS = main.c args.c cmd.c
+PROGS = main.c args.c cmd.c break.c
 
 sdb: $(PROGS)
-	$(CC) -o $@ $^
+	$(CC) -g -o $@ $^
 
 clean:
 	rm -rf *.o sdb
