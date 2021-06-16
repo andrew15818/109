@@ -4,6 +4,7 @@
 #include <sys/user.h>
 
 #include "args.h"
+#include "break.h"
 enum state{
 	ANY,
 	LOADED,
@@ -35,19 +36,24 @@ struct command {
 	int val;
 	struct user_regs_struct regs;
 };
+
+
 // Pair command type with responsible function
 typedef struct funcPair{
 		int type;
 		void (*exec)(struct command*, const int* state);
 }funcPair;
 
+/* Need to be extern so we can use them over all our program. */
 extern funcPair funcPairs[];
+extern char FILENAME[STR_MAX];
 
 // TODO : For clarity name all the funcs cmd{name}
 int cmdNext(struct command*, int* , struct args*); // Execute the next command, return 1 on error/finished
 void cmdFromUser(struct command*, char* buf);
 int cmdAssignType(struct command*, char* buf);
-void cmdGetParamNo(char* buf, char* src, int bufsize, int srcsize, int paramNo);
+int cmdGetParamNo(char* buf, char* src, int bufsize, int srcsize, int paramNo);
+int cmdSetExecFilename(const char*);
 void cmdDispatch(struct command*, int*);
 
 /* Command functions*/
