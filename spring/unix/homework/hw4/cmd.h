@@ -30,14 +30,42 @@ enum commandType{
 
 struct command {
 	enum commandType type;
-	int address; // maybe change int?
+	long int address; // maybe change int?
 	char path[STR_MAX];
 	int val;
 	struct user_regs_struct regs;
 };
-// TODO : For clarity name all the funcs cmd{name}
+// Pair command type with responsible function
+typedef struct funcPair{
+		int type;
+		void (*exec)(struct command*, const int* state);
+}funcPair;
 
-int cmdNext(enum state*, struct args*); // Execute the next command, return 1 on error/finished
-void cmdFromUser(struct command*);
+extern funcPair funcPairs[];
+
+// TODO : For clarity name all the funcs cmd{name}
+int cmdNext(struct command*, int* , struct args*); // Execute the next command, return 1 on error/finished
+void cmdFromUser(struct command*, char* buf);
+int cmdAssignType(struct command*, char* buf);
+void cmdGetParamNo(char* buf, char* src, int bufsize, int srcsize, int paramNo);
+void cmdDispatch(struct command*, int*);
+
+/* Command functions*/
+void cmdBreak (struct command*, 	const int*);
+void cmdCont(struct command*, 		const int*);
+void cmdDelete(struct command*, 	const int*);
+void cmdDisasm(struct command*, 	const int*);
+void cmdDump(struct command*, 		const int*);
+void cmdExit(struct command*, 		const int*);
+void cmdGet(struct command*, 		const int*);
+void cmdGetregs(struct command*, 	const int*);
+void cmdHelp(struct command*, 		const int*);
+void cmdList(struct command*, 		const int*);
+void cmdLoad(struct command*, 		const int*);
+void cmdRun(struct command*, 		const int*);
+void cmdVmmap(struct command*, 		const int*);
+void cmdSet(struct command*, 		const int*);
+void cmdSi(struct command*, 		const int*);
+void cmdStart(struct command*, 		const int*);
 
 #endif

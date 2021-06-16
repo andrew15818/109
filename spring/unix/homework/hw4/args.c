@@ -23,16 +23,10 @@ void parseArgs(int argc, char** argv, struct args* arg){
 			printf("** Executing %s\n", arg->prog);
 		}
 	}
-	/*
-	while((c = getopt(argc, argv, "s:")) != -1){
-		if(c == 's'){
-			arg->s = 1;
-			strncpy(arg->script, optarg, strlen(optarg));
-			arg->script[strlen(optarg)] = '\0';
-			printf("**Found s: %d, script: %s\n", arg->s, arg->script);
-		}else{
-			printf("**Option %c not supported.\n", c);	
-		}
+	// if only the executable name is given
+	if(arg->s == 0 && argc > 1){
+		strncpy(arg->prog, argv[1], strlen(argv[1]));
+		arg->prog[strlen(argv[1])] = '\0'; 
+		printf("** Loading %s\n", arg->prog);
 	}
-	*/
 }
