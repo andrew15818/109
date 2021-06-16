@@ -27,3 +27,7 @@ of the commands.
 
 
 
+## TODO: 
+1. Actually get the ptrace and the capstone up and running 
+for teh various commands.
+2. Complete the code for the breakpoints linked list.
