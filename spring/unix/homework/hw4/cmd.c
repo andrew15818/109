@@ -1,6 +1,8 @@
 #include "cmd.h"
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
+#include <elf.h>
 
 #define STR_MAX 256
 #define CMD_NUM 16
@@ -22,7 +24,7 @@ funcPair funcPairs[CMD_NUM] = {
 	{.type=SI, 			.exec=cmdSi},
 	{.type=START, 		.exec=cmdStart},
 };
-
+char FILENAME[STR_MAX];
 /* Get the next command
  * @state:  program state, some commands depend
  * @arg: whether -s given or not
@@ -52,12 +54,15 @@ void cmdFromUser(struct command* cmd, char* buf){
 
 // Get the params and just call the appropriate function?
 int cmdAssignType(struct command* cmd, char* buf){
-	char dst[STR_MAX], src[STR_MAX];
+	char dst[STR_MAX];
 	if(!strncmp("br", buf, 2) || !strncmp("b", buf, 1)){
 		printf("** Break command\n");
-		cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1);
+		if(!cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
+			printf("** \tInvalid argument.\n");
+			return 1;
+		}
 		cmd->address = strtol(dst, NULL, 16);
-		printf("** Breakpoint at %x\n", cmd->address);
+		printf("** \tBreakpoint at %lx\n", cmd->address);
 		cmd->type = BREAK;	
 	}else if (!strncmp("cont", buf, 4) || !strncmp("c", buf, 1)){
 		printf("** Cont command\n");
@@ -83,12 +88,16 @@ int cmdAssignType(struct command* cmd, char* buf){
 	}else if (!strncmp("help", buf, 4) || !strncmp("h", buf, 1)){
 		printf("** Help command\n");
 		cmd->type = HELP;	
+	}else if (!strncmp("load", buf, 4)){
+		printf("** Load command\n");
+		if(cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
+			strncpy(cmd->path, dst, strlen(cmd->path));
+			cmdSetExecFilename(dst);
+		}
+		cmd->type = LOAD;	
 	}else if (!strncmp("list", buf, 4) || !strncmp("l", buf, 1)){
 		printf("** List command\n");
 		cmd->type = LIST;	
-	}else if (!strncmp("load", buf, 4)){
-		printf("** Load command\n");
-		cmd->type = LOAD;	
 	}else if (!strncmp("run", buf, 3) || !strncmp("r", buf, 1)){
 		printf("** Run command\n");
 		cmd->type = RUN;	
@@ -108,7 +117,7 @@ int cmdAssignType(struct command* cmd, char* buf){
 	return cmd->type;
 }
 // Get the ith parameter of cmd string
-void cmdGetParamNo(char* buf, char* src, int bufsize, int srcsize,  int paramNo){
+int cmdGetParamNo(char* buf, char* src, int bufsize, int srcsize,  int paramNo){
 	int spacecount = 0, j = 0;
 	int i =0;
 	// skip whitespace at beginning
@@ -124,14 +133,19 @@ void cmdGetParamNo(char* buf, char* src, int bufsize, int srcsize,  int paramNo)
 				index++;	
 			}
 			printf("** Got %s\n", buf);
-			return;
+			return 1;
 		}
 		if(src[i] == ' '){
 			spacecount++;	
 		}
 		i++;
 	}
-	buf = NULL;
+	//buf = NULL;
+	return 0;
+}
+int cmdSetExecFilename(const char* path){
+	strncpy(FILENAME, path, STR_MAX);	
+	printf("** Set the executable name to %s\n", FILENAME);
 }
 // Call the appropriate function
 void cmdDispatch(struct command* cmd, int* state){
@@ -149,7 +163,11 @@ void cmdDispatch(struct command* cmd, int* state){
 }
 
 /*** Command Exec functions***/
-void cmdBreak(struct command* cmd, const int * state){}
+void cmdBreak(struct command* cmd, const int * state){
+	if(*state != RUNNING){
+		printf("** No process running.\n");
+	}	
+}
 void cmdCont(struct command* cmd, const int* state){
 
 }
@@ -180,7 +198,17 @@ void cmdHelp( struct command* cmd, const int* state){
 	printf("%s", help);
 }
 void cmdList(struct command* cmd, const int * state){}
-void cmdLoad(struct command* cmd, const int * state){}
+/* Read the ELF header for the entry point.*/
+void cmdLoad(struct command* cmd, const int * state){
+	FILE* fp = fopen(FILENAME, "rb");
+	if(fp == NULL){
+		printf("** Could not open file %s\n", FILENAME);
+		return;
+	}
+	Elf64_Ehdr header;	
+	fread(&header, 1, sizeof(header), fp);
+	printf("** Entry point(?): %lx\n", header.e_entry);
+}
 void cmdRun(struct command* cmd, const int * state){}
 void cmdVmmap(struct command* cmd, const int * state){}
 void cmdSet(struct command* cmd, const int * state){}
