@@ -24,7 +24,14 @@ funcPair funcPairs[CMD_NUM] = {
 	{.type=SI, 			.exec=cmdSi},
 	{.type=START, 		.exec=cmdStart},
 };
+
 char FILENAME[STR_MAX];
+pid_t child;
+
+int cmdSetState(int* state, const int changeTo){
+	*state = changeTo;
+	return 1;
+}
 /* Get the next command
  * @state:  program state, some commands depend
  * @arg: whether -s given or not
@@ -144,8 +151,12 @@ int cmdGetParamNo(char* buf, char* src, int bufsize, int srcsize,  int paramNo){
 	return 0;
 }
 int cmdSetExecFilename(const char* path){
+	if(path == NULL || strlen(path) == 0){
+		return 1;
+	}
 	strncpy(FILENAME, path, STR_MAX);	
 	printf("** Set the executable name to %s\n", FILENAME);
+	return 0;
 }
 // Call the appropriate function
 void cmdDispatch(struct command* cmd, int* state){
@@ -197,19 +208,57 @@ void cmdHelp( struct command* cmd, const int* state){
 		"- start: start the program and stop at the first instruction\n";	
 	printf("%s", help);
 }
+pid_t initptrace(const char* prog){
+
+	if((child = fork()) < 0){
+		printf("** Error attaching tracer.\n");
+		return 1;
+	}
+	// Child code
+	if( child == 0){
+		if(ptrace(PTRACE_TRACEME, 0, 0, 0) < 0){return 1;}
+		printf("** Tracing %s\n", prog);
+		// TODO: The &args looks weird...
+		execvp(prog, &prog);
+	}
+	// Parent
+	else{
+		ptrace(PTRACE_SETOPTIONS, child, 0, PTRACE_O_EXITKILL);
+	}
+	return 0;	
+}
 void cmdList(struct command* cmd, const int * state){}
 /* Read the ELF header for the entry point.*/
-void cmdLoad(struct command* cmd, const int * state){
+void cmdLoad(struct command* cmd, int * state){
+	// We can only load a program if one isn't loaded already right?
+	if(*state != ANY){
+		printf("** No program loaded.\n");
+		return;
+	}
+	
 	FILE* fp = fopen(FILENAME, "rb");
+
 	if(fp == NULL){
 		printf("** Could not open file %s\n", FILENAME);
 		return;
-	}
+	}	
+
 	Elf64_Ehdr header;	
 	fread(&header, 1, sizeof(header), fp);
-	printf("** Entry point(?): %lx\n", header.e_entry);
+	cmdSetState(state, LOADED);
+	printf("** Program '%s' loaded. entry point 0x%lx\n", FILENAME, header.e_entry);
 }
-void cmdRun(struct command* cmd, const int * state){}
+void cmdRun(struct command* cmd, const int * state){
+	if(*state == RUNNING){
+		printf("** Program is already running.\n");
+	}else if(*state == ANY){
+		printf("** No program is running yet.\n");
+		return;
+	}
+	pid_t childPID = initptrace(FILENAME);
+	printf("** pid %d\n", childPID);
+	return;
+}
 void cmdVmmap(struct command* cmd, const int * state){}
 void cmdSet(struct command* cmd, const int * state){}
 void cmdSi(struct command* cmd, const int * state){}
