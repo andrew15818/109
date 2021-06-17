@@ -9,6 +9,7 @@
 #define STR_MAX 256
 struct args{
 	int s;
+	int p;
 	char script[STR_MAX]; // script to read 
 	char prog[STR_MAX];   // program to exec
 };

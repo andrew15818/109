@@ -20,12 +20,14 @@ void parseArgs(int argc, char** argv, struct args* arg){
 			if(i == sindex + 1){continue;}	
 			strncpy(arg->prog, argv[i], strlen(argv[i]));
 			arg->prog[strlen(argv[i])] = '\0';
+			arg->p = 1;
 			printf("** Executing %s\n", arg->prog);
 		}
 	}
 	// if only the executable name is given
 	if(arg->s == 0 && argc > 1){
 		strncpy(arg->prog, argv[1], strlen(argv[1]));
+		arg->p = 1;
 		arg->prog[strlen(argv[1])] = '\0'; 
 		printf("** Loading %s\n", arg->prog);
 	}
