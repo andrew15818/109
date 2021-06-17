@@ -31,3 +31,5 @@ of the commands.
 1. Actually get the ptrace and the capstone up and running 
 for teh various commands.
 2. Complete the code for the breakpoints linked list.
+3. Init the ptrace and the child process **only when the run/start 
+command is run**.
