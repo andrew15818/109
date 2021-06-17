@@ -9,40 +9,22 @@
 
 #include "args.h"
 #include "cmd.h"
-pid_t child, parent;
+
 void logDebug(const char* msg){
 	printf("** %s\n", msg);
 }
-
-int initptrace(char* prog, char** args){
-	if((child = fork()) < 0){
-		printf("** Error attaching tracer.\n");
-		return 1;
-	}
-	// Child code
-	if( child == 0){
-		if(ptrace(PTRACE_TRACEME, 0, 0, 0) < 0){return 1;}
-		printf("** Tracing %s\n", prog);
-		// TODO: The &args looks weird...
-		execvp(prog, args);
-	}
-	// Parent
-	else{
-		ptrace(PTRACE_SETOPTIONS, child, 0, PTRACE_O_EXITKILL);
-	}
-	return 0;	
-}
-
 
 int main(int argc, char** argv){
 	struct args arg;
 	parseArgs(argc, argv, &arg);	
 	
 	int st;	
-	st = ANY;
+	struct command tmp;
+	cmdSetState(&st, ANY);
 	
-	if(arg.s){
+	if(arg.p){
 		cmdSetExecFilename(arg.prog);				
+		cmdLoad(&tmp, &st); 
 	}	
 	
 	while(1){	
