@@ -58,7 +58,10 @@ int cmdAssignType(struct command*, char* buf);
 int cmdGetParamNo(char* buf, char* src, int bufsize, int srcsize, int paramNo);
 int cmdSetExecFilename(const char*);
 int cmdSetState(int* , const int );
+int cmdSetPid(const pid_t);
 void cmdDispatch(struct command*, int*);
+
+void errquit(const char* );
 
 /* Command functions*/
 void cmdBreak (struct command*, 	const int*);

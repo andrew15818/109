@@ -2,6 +2,7 @@
 
 void parseArgs(int argc, char** argv, struct args* arg){
 	arg->s = 0;	
+	arg->p = 0;
 	// need to skip the arg after -s
 	int sindex = 0;
 	for(int i = 1; i < argc; i++){

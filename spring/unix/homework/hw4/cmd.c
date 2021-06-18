@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <elf.h>
 
 #define STR_MAX 256
@@ -31,6 +33,13 @@ pid_t child;
 int cmdSetState(int* state, const int changeTo){
 	*state = changeTo;
 	return 1;
+}
+int cmdSetPid(const pid_t newPid){
+	child = newPid;	
+}
+void errquit(const char* msg){
+	perror(msg);
+	exit(-1);
 }
 /* Get the next command
  * @state:  program state, some commands depend
@@ -209,23 +218,28 @@ void cmdHelp( struct command* cmd, const int* state){
 	printf("%s", help);
 }
 pid_t initptrace(const char* prog){
-
-	if((child = fork()) < 0){
+	pid_t tmp;
+	if((tmp = fork()) < 0){
 		printf("** Error attaching tracer.\n");
 		return 1;
 	}
 	// Child code
-	if( child == 0){
-		if(ptrace(PTRACE_TRACEME, 0, 0, 0) < 0){return 1;}
+	if( tmp == 0){
+		//if(ptrace(PTRACE_TRACEME, 0, 0, 0) < 0){return 1;}
 		printf("** Tracing %s\n", prog);
 		// TODO: The &args looks weird...
-		execvp(prog, &prog);
+		//execlp(prog, NULL);
+		char* args[] = {"", NULL};
+		execvp("./hello64", args);
+		errquit("child");
 	}
+	
 	// Parent
 	else{
 		ptrace(PTRACE_SETOPTIONS, child, 0, PTRACE_O_EXITKILL);
 	}
-	return 0;	
+	cmdSetPid(tmp);
+	return tmp;	
 }
 void cmdList(struct command* cmd, const int * state){}
 /* Read the ELF header for the entry point.*/
@@ -255,8 +269,16 @@ void cmdRun(struct command* cmd, const int * state){
 		printf("** No program is running yet.\n");
 		return;
 	}
+	cmdSetState(state, RUNNING);
 	pid_t childPID = initptrace(FILENAME);
 	printf("** pid %d\n", childPID);
+	int status; 
+	if(waitpid(childPID, &status, 0) < 0)errquit("waitpid");
+	if(WIFSTOPPED(status)){
+		ptrace(PTRACE_CONT, child, 0, 0);		
+		waitpid(child, &status, 0);
+		perror("done");
+	}
 	return;
 }
 void cmdVmmap(struct command* cmd, const int * state){}
