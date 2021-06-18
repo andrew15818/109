@@ -17,7 +17,7 @@ extern struct breakpointTable* table;
 
 struct breakpointTable* breakNewTable();
 struct breakpoint* breakNew();
-int breakAdd(struct breakpoint*);
+int breakAdd(const long int );
 int breakDelete(int index);
 int breakCleanup();
 

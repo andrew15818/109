@@ -12,6 +12,7 @@ struct breakpointTable* breakNewTable(){
     return tb;
 }
 
+
 struct breakpoint* breakNew(){
     struct breakpoint *bp = malloc(sizeof(struct breakpoint));
     bp->address = 0x0;
@@ -19,14 +20,19 @@ struct breakpoint* breakNew(){
     return bp;
 }
 
-int breakAdd(struct breakpoint* bp){
+int breakAdd(const long int address){
+	struct breakpoint* bp = breakNew();
+	bp->address = address;
+	if(table == NULL){table = breakNewTable();}
     if(table->head == NULL && table->tail == NULL){
         bp->index = 0; 
         table->head = table->tail = bp;
+		return 1;
     }
     struct breakpoint* tmp = table->tail;
     bp->index = tmp->index + 1;
     tmp->next = bp;
+	tmp = bp;
     return 1;
 }
 int breakDelete(int index){
