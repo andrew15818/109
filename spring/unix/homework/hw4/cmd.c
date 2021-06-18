@@ -1,4 +1,4 @@
-#include "cmd.h"
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -6,8 +6,11 @@
 #include <sys/wait.h>
 #include <elf.h>
 
+#include "cmd.h"
+#include "break.h"
 #define STR_MAX 256
 #define CMD_NUM 16
+/* Extern variable declarations */
 funcPair funcPairs[CMD_NUM] = {
 	{.type=BREAK, 		.exec=cmdBreak},
 	{.type=CONT, 		.exec=cmdCont},
@@ -26,9 +29,34 @@ funcPair funcPairs[CMD_NUM] = {
 	{.type=SI, 			.exec=cmdSi},
 	{.type=START, 		.exec=cmdStart},
 };
-
 char FILENAME[STR_MAX];
 pid_t child;
+
+
+/*Create the child process and exec the process*/
+pid_t initptrace(const char* prog){
+	pid_t tmp;
+	if((tmp = fork()) < 0){
+		printf("** Error attaching tracer.\n");
+		return 1;
+	}
+	// Child code
+	if( tmp == 0){
+		//if(ptrace(PTRACE_TRACEME, 0, 0, 0) < 0){return 1;}
+		printf("** Tracing %s\n", prog);
+		// TODO: The &args looks weird...
+		char* args[] = {"", NULL};
+		execvp(prog, args);
+		errquit("child");
+	}
+	
+	// Parent
+	else{
+		ptrace(PTRACE_SETOPTIONS, child, 0, PTRACE_O_EXITKILL);
+	}
+	cmdSetPid(tmp);
+	return tmp;	
+}
 
 int cmdSetState(int* state, const int changeTo){
 	*state = changeTo;
@@ -187,9 +215,27 @@ void cmdBreak(struct command* cmd, const int * state){
 	if(*state != RUNNING){
 		printf("** No process running.\n");
 	}	
+	breakAdd(cmd->address);
+	printf("** Breakpoint set at %lx\n", cmd->address);
+	return;
 }
-void cmdCont(struct command* cmd, const int* state){
 
+/* Check if process is running and continue? */
+/*TODO: Debug this*/
+void cmdCont(struct command* cmd, const int* state){
+	if(*state != RUNNING){
+		printf("** No program running.\n");	
+		return;
+	}
+	// If the program is stopped continue it?
+	int status; 
+	if(waitpid(child, &status, 0) < 0)errquit("waitpid");
+	if(WIFSTOPPED(status)){
+		ptrace(PTRACE_CONT, child, 0, 0);		
+		waitpid(child, &status, 0);
+		perror("done");
+	}
+	return;
 }
 void cmdDelete(struct command* cmd, const int * state){}
 void cmdDisasm(struct command* cmd, const int * state){}
@@ -217,31 +263,9 @@ void cmdHelp( struct command* cmd, const int* state){
 		"- start: start the program and stop at the first instruction\n";	
 	printf("%s", help);
 }
-pid_t initptrace(const char* prog){
-	pid_t tmp;
-	if((tmp = fork()) < 0){
-		printf("** Error attaching tracer.\n");
-		return 1;
-	}
-	// Child code
-	if( tmp == 0){
-		//if(ptrace(PTRACE_TRACEME, 0, 0, 0) < 0){return 1;}
-		printf("** Tracing %s\n", prog);
-		// TODO: The &args looks weird...
-		//execlp(prog, NULL);
-		char* args[] = {"", NULL};
-		execvp("./hello64", args);
-		errquit("child");
-	}
-	
-	// Parent
-	else{
-		ptrace(PTRACE_SETOPTIONS, child, 0, PTRACE_O_EXITKILL);
-	}
-	cmdSetPid(tmp);
-	return tmp;	
+void cmdList(struct command* cmd, const int * state){
+	breakPrint();	
 }
-void cmdList(struct command* cmd, const int * state){}
 /* Read the ELF header for the entry point.*/
 void cmdLoad(struct command* cmd, int * state){
 	// We can only load a program if one isn't loaded already right?
