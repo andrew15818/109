@@ -12,7 +12,7 @@ void parseArgs(int argc, char** argv, struct args* arg){
 			// Does this work?
 			if(argv[i + 1]){
 				int argsize = strlen(argv[i+1]);
-				strncpy(arg->script, argv[i + 1], argsize);	
+										strncpy(arg->script, argv[i + 1], argsize);	
 				arg->script[argsize] = '\0';
 				printf("** Reading from script %s\n", arg->script);
 			}
