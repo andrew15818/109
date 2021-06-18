@@ -49,7 +49,7 @@ typedef struct funcPair{
 /* Need to be extern so we can use them over all our program. */
 extern funcPair funcPairs[];
 extern char FILENAME[STR_MAX];
-extern pid_t childPid;
+extern pid_t child;
 
 // TODO : For clarity name all the funcs cmd{name}
 int cmdNext(struct command*, int* , struct args*); // Execute the next command, return 1 on error/finished
@@ -60,8 +60,7 @@ int cmdSetExecFilename(const char*);
 int cmdSetState(int* , const int );
 int cmdSetPid(const pid_t);
 void cmdDispatch(struct command*, int*);
-
-void errquit(const char* );
+pid_t initptrace(const char* prog);
 
 /* Command functions*/
 void cmdBreak (struct command*, 	const int*);
