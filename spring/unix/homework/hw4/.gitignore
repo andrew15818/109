@@ -1,4 +1,7 @@
 peda-session*.txt
 .gdb_history
 sdb
+<<<<<<< HEAD
 hw4
+=======
+>>>>>>> f705dd6a1d06db881cf9e136c57f945498148d4a

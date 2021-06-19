@@ -17,6 +17,7 @@ struct breakpoint* breakNew(){
     struct breakpoint *bp = malloc(sizeof(struct breakpoint));
     bp->address = 0x0;
     bp->index = 0; 
+    bp->next = NULL;
     return bp;
 }
 
@@ -36,13 +37,36 @@ int breakAdd(const long int address){
     return 1;
 }
 int breakDelete(int index){
+    // IF table empty
+    if(table->head == NULL && table->tail == NULL){
+        return 1;
+    }
+    // IF there is only one node
+    if(table->head == table->tail){
+        table->head = table->tail = NULL;
+        free(table->head);
+        return 0;
+    }
+    struct breakpoint* sent = table->head, *prev;
+    int i = 0;
+    while(sent->next != NULL && i < index){
+        prev = sent;
+        sent = sent->next;
+        i++;
+    }
+    prev->next = sent->next;
+    free(sent);
+    while(prev->next != NULL){
+        prev->next->index = prev->index + 1;
+        prev = prev->next;
+    }
     return 0;
 }
 /* Debug */
 void breakPrint(){
     struct breakpoint* sent = table->head;
     while(sent != NULL){
-       printf("b[%ld] = %x\n", sent->index, sent->address); 
+       printf("b[%ld] = %lx\n", sent->index, sent->address); 
        sent = sent->next;
     }
 }
