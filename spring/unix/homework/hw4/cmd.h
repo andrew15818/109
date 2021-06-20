@@ -7,6 +7,8 @@
 
 #include "args.h"
 #include "break.h"
+#include "cap.h"
+
 enum state{
 	ANY,
 	LOADED,

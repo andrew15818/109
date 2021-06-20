@@ -1,6 +1,7 @@
 
 #include <stdlib.h>
 #include <sys/ptrace.h>
+#include <sys/user.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
@@ -11,6 +12,7 @@
 
 #include "cmd.h"
 #include "break.h"
+
 #define STR_MAX 256
 #define CMD_NUM 16
 /* Extern variable declarations */
@@ -75,8 +77,8 @@ pid_t initptrace(const char* prog){
 		// TODO: The &args looks weird...
 		char* args[] = {"", NULL};
 		printf("** Tracing %s\n", prog);
-		//execvp("./hello64", args);
-		execvp("./guess.nopie", args);
+		execvp("./hello64", args);
+		//execvp("./guess.nopie", args);
 
 		errquit("child");
 	}else{	
@@ -102,9 +104,11 @@ int cmdNext(struct command* cmd, int* state, struct args* arg){
 	 * }*/
 	cmdFromUser(cmd, buf);
 	cmdAssignType(cmd, buf);
+	/*
 	if(cmd->type == EXIT){
 		return 1;	
 	}
+	*/
 	cmdDispatch(cmd, state);
 	return 0;
 }
@@ -120,7 +124,8 @@ void cmdFromUser(struct command* cmd, char* buf){
 // Get the params and just call the appropriate function?
 // TODO: Some abbrevs call the wrong thing.
 int cmdAssignType(struct command* cmd, char* buf){
-	char dst[STR_MAX];
+	char dst[STR_MAX] = {'\0'};
+	memset(cmd->path, '\0', sizeof(cmd->path));
 	if(!strncmp("br", buf, 2) || !strncmp("b", buf, 1)){
 		printf("** Break command\n");
 		if(!cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
@@ -144,6 +149,12 @@ int cmdAssignType(struct command* cmd, char* buf){
 		return 0;
 	}else if (!strncmp("disasm", buf, 6) || !strncmp("d", buf, 1)){
 		printf("** Disasm command\n");
+		if(!cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
+			printf("Erorr getting address.\n");
+			return 1;
+		}	
+		cmd->address = strtol(dst, NULL, 16);
+		printf("Got 0x%08lx\n", cmd->address);
 		cmd->type = DISASM;	
 	}else if (!strncmp("dump", buf, 4) || !strncmp("x", buf, 1)){
 		printf("** Dump command\n");
@@ -159,6 +170,11 @@ int cmdAssignType(struct command* cmd, char* buf){
 		cmd->type = GETREGS;	
 	}else if (!strncmp("get", buf, 3) || !strncmp("g", buf, 1)){
 		printf("** Get command\n");
+		if(!cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
+			printf("** Invalid register.\n");
+			return 1;
+		}
+		strncpy(cmd->path, dst, strlen(dst));
 		cmd->type = GET;	
 	}else if (!strncmp("help", buf, 4) || !strncmp("h", buf, 1)){
 		printf("** Help command\n");
@@ -182,13 +198,26 @@ int cmdAssignType(struct command* cmd, char* buf){
 	}else if (!strncmp("start", buf, 5)){
 		printf("** Start command\n");
 		cmd->type = START;	
-	}else if (!strncmp("set", buf, 3) || !strncmp("s", buf, 1)){
-		printf("** Set command\n");
-		cmd->type = SET;	
 	}else if (!strncmp("si", buf, 2)){
 		printf("** Si command\n");
 		cmd->type = SI;	
-	}	
+	}else if (!strncmp("set", buf, 3) || !strncmp("s", buf, 1)){
+		printf("** Set command\n");
+		cmd->type = SET;	
+		if(!cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
+			printf("First parameter error.");
+			return 1;
+		}
+		// name of register to change
+		strncpy(cmd->path, dst, strlen(dst));
+		memset(dst, '\0', sizeof(dst));
+		if(!cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 2)){
+			printf("Second parameter error.");
+			return 1;
+		}
+		cmd->address = strtol(dst, NULL, 16);
+		printf("Going to set %s to : 0x%08lx\n", cmd->path, cmd->address);
+	}
 	return cmd->type;
 }
 // Get the ith parameter of cmd string
@@ -281,13 +310,13 @@ void cmdCont(struct command* cmd, const int* state){
 	int status; 
 	printf("**About to wait\n");
 
-	if(WIFSTOPPED(status)){
+	//if(WIFSTOPPED(status)){
 		ptrace(PTRACE_CONT, child, 0, 0);		
 		waitpid(child, &status, 0);
 	//	perror("done");
-	}
+	//}
 	printf("**done continuing\n");
-	if(waitpid(child, &status, 0) < 0)errquit("waitpid2");
+	//if(waitpid(child, &status, 0) < 0)errquit("waitpid2");
 	return;
 }
 /*Delete the breakpoints*/
@@ -299,7 +328,16 @@ void cmdDelete(struct command* cmd, const int * state){
 	printf("** Deleting breakpoint %d\n", cmd->val);
 	breakDelete(cmd->val);
 }
-void cmdDisasm(struct command* cmd, const int * state){}
+void cmdDisasm(struct command* cmd, const int * state){
+	if(*state!= RUNNING){
+		printf("** No program running.\n");
+		return;
+	}
+	if(capInit() == 1){
+		return;
+	}
+	// Loop through given address and disassemble
+}
 
 void cmdDump(struct command* cmd, const int * state){
 	if(*state != RUNNING){
@@ -307,9 +345,45 @@ void cmdDump(struct command* cmd, const int * state){
 		return;
 	}
 	
+}	
+
+// Exit and terminate the child process.
+void cmdExit(struct command* cmd, const int * state){
+	if(child != 0){
+		int ret = kill(child, SIGTERM);	
+		if(ret == -1)errquit("kill@Exit");
+	}
+	printf("** Killed process [%d]\n", child);
+	exit(0);
 }
-void cmdExit(struct command* cmd, const int * state){}
-void cmdGet(struct command* cmd, const int * state){}
+void cmdGet(struct command* cmd, const int * state){
+	if(*state != RUNNING){
+		printf("** No program running.\n");
+		return;
+	}
+	if(ptrace(PTRACE_GETREGS, child, 0, &cmd->regs) < 0) errquit("getregs@get");
+
+	if(!strncmp(cmd->path, "r15", 3)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.r15, cmd->regs.rip);}	
+	else if(!strncmp(cmd->path, "r14", 3)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.r14, cmd->regs.rip);}	
+	else if(!strncmp(cmd->path, "r13", 3)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.r13, cmd->regs.rip);}	
+	else if(!strncmp(cmd->path, "r12", 3)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.r12, cmd->regs.rip);}	
+	else if(!strncmp(cmd->path, "r11", 3)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.r11, cmd->regs.rip);}	
+	else if(!strncmp(cmd->path, "r10", 3)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.r10, cmd->regs.rip);}	
+	else if(!strncmp(cmd->path, "r9", 2)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.r9, cmd->regs.rip);}	
+	else if(!strncmp(cmd->path, "r8", 2)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.r8, cmd->regs.rip);}	
+	else if(!strncmp(cmd->path, "rax", 3)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.rax, cmd->regs.rip);}	
+	else if(!strncmp(cmd->path, "rbx", 3)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.rbx, cmd->regs.rip);}	
+	else if(!strncmp(cmd->path, "rcx", 3)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.rcx, cmd->regs.rip);}	
+	else if(!strncmp(cmd->path, "rdx", 3)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.rdx, cmd->regs.rip);}	
+	else if(!strncmp(cmd->path, "rsi", 3)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.rsi, cmd->regs.rip);}	
+	else if(!strncmp(cmd->path, "rdi", 3)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.rdi, cmd->regs.rip);}	
+	else if(!strncmp(cmd->path, "rbp", 3)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.rbp, cmd->regs.rip);}	
+	else if(!strncmp(cmd->path, "rsp", 3)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.rsp, cmd->regs.rip);}	
+	else if(!strncmp(cmd->path, "rip", 3)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.rip, cmd->regs.rip);}	
+	else if(!strncmp(cmd->path, "eflags", 3)){printf("%s = 0x%08llx (0x%08llx)\n", cmd->path, cmd->regs.eflags, cmd->regs.rip);}	
+
+	return;
+}
 
 void cmdGetregs(struct command* cmd, const int * state){
 	if(*state != RUNNING){
@@ -320,11 +394,11 @@ void cmdGetregs(struct command* cmd, const int * state){
 	if(ptrace(PTRACE_GETREGS, child, (void*)cmd->address, &cmd->regs) < 0){
 		errquit("ptrace@getregs");
 	}
-	printf("RAX 0x%08x\t RBX 0x%08x\t RCX 0x%08x\t RDX 0x%08x\n", cmd->regs.rax, cmd->regs.rbx, cmd->regs.rcx, cmd->regs.rdx);
-	printf("R8  0x%08x\t  R9 0x%08x\t R10 0x%08x\t R11 0x%08x\n", cmd->regs.r8, cmd->regs.r9, cmd->regs.r10, cmd->regs.r11);
-	printf("R12 0x%08x\t R13 0x%08x\t R14 0x%08x\t R15 0x%08x\n", cmd->regs.r12, cmd->regs.r13, cmd->regs.r14, cmd->regs.r15);
-	printf("RDI 0x%08x\t RSI 0x%08x\t RBP 0x%08x\t RSP 0x%08x\n", cmd->regs.rdi, cmd->regs.rsi, cmd->regs.rbp, cmd->regs.rsp);
-	printf("RIP 0x%08x\t FLAGS 0x%08x\n", cmd->regs.rip, cmd->regs.eflags);
+	printf("RAX 0x%08llx\t RBX 0x%08llx\t RCX 0x%08llx\t RDX 0x%08llx\n", cmd->regs.rax, cmd->regs.rbx, cmd->regs.rcx, cmd->regs.rdx);
+	printf("R8  0x%08llx\t  R9 0x%08llx\t R10 0x%08llx\t R11 0x%08llx\n", cmd->regs.r8, cmd->regs.r9, cmd->regs.r10, cmd->regs.r11);
+	printf("R12 0x%08llx\t R13 0x%08llx\t R14 0x%08llx\t R15 0x%08llx\n", cmd->regs.r12, cmd->regs.r13, cmd->regs.r14, cmd->regs.r15);
+	printf("RDI 0x%08llx\t RSI 0x%08llx\t RBP 0x%08llx\t RSP 0x%08llx\n", cmd->regs.rdi, cmd->regs.rsi, cmd->regs.rbp, cmd->regs.rsp);
+	printf("RIP 0x%08llx\t FLAGS 0x%08llx\n", cmd->regs.rip, cmd->regs.eflags);
 	return;
 }
 void cmdHelp( struct command* cmd, const int* state){
@@ -398,7 +472,6 @@ void cmdVmmap(struct command* cmd, const int * state){
 	int pathsize = 20;
 	char path[pathsize];
 	snprintf(path, pathsize, "/proc/%d/maps", child);
-	printf("** Searching the depths of %s\n", path);
 
 	char buf[8192];
 	int fd, ret; 
@@ -408,8 +481,48 @@ void cmdVmmap(struct command* cmd, const int * state){
 	close(fd);
 	return;
 }
-void cmdSet(struct command* cmd, const int * state){}
-void cmdSi(struct command* cmd, const int * state){}
+void cmdSet(struct command* cmd, const int * state){
+	if(*state != RUNNING){
+		printf("** No program running.\n");
+		return;
+	}
+	// :'(
+	if(ptrace(PTRACE_GETREGS, child, 0, &cmd->regs) < 0)errquit("ptrace@Set");
+	if(!strncmp(cmd->path, "r15", 3)){cmd->regs.r15 = cmd->address;}
+	else if(!strncmp(cmd->path, "r14", 3)){cmd->regs.r14 = cmd->address;}
+	else if(!strncmp(cmd->path, "r13", 3)){cmd->regs.r13 = cmd->address;}
+	else if(!strncmp(cmd->path, "r12", 3)){cmd->regs.r12 = cmd->address;}
+	else if(!strncmp(cmd->path, "r11", 3)){cmd->regs.r11 = cmd->address;}
+	else if(!strncmp(cmd->path, "r10", 3)){cmd->regs.r10 = cmd->address;}
+	else if(!strncmp(cmd->path, "r9", 2)){cmd->regs.r9 = cmd->address;}
+	else if(!strncmp(cmd->path, "r8", 2)){cmd->regs.r8 = cmd->address;}
+	else if(!strncmp(cmd->path, "rax", 3)){cmd->regs.rax = cmd->address;}
+	else if(!strncmp(cmd->path, "rbx", 3)){cmd->regs.rbx = cmd->address;}
+	else if(!strncmp(cmd->path, "rcx", 3)){cmd->regs.rcx = cmd->address;}
+	else if(!strncmp(cmd->path, "rdx", 3)){cmd->regs.rdx = cmd->address;}
+	else if(!strncmp(cmd->path, "rsi", 3)){cmd->regs.rsi = cmd->address;}
+	else if(!strncmp(cmd->path, "rdi", 3)){cmd->regs.rdi = cmd->address;}
+	else if(!strncmp(cmd->path, "rbp", 3)){cmd->regs.rbp = cmd->address;}
+	else if(!strncmp(cmd->path, "rsp", 3)){cmd->regs.rsp = cmd->address;}
+	else if(!strncmp(cmd->path, "rip", 3)){cmd->regs.rip = cmd->address;}
+	else if(!strncmp(cmd->path, "eflags", 3)){cmd->regs.eflags = cmd->address;}
+
+	if(ptrace(PTRACE_SETREGS, child, 0, &cmd->regs) < 0)errquit("setregs@cmdSet");
+	//curious
+	struct user_regs_struct regs;
+	if(ptrace(PTRACE_GETREGS, child, 0, &regs) < 0)errquit("setregs@cmdSet");
+
+}
+void cmdSi(struct command* cmd, const int * state){
+	if(*state != RUNNING ){
+		printf("** No program running.\n");
+		return;
+	}
+	if(ptrace(PTRACE_SINGLESTEP, child, 0, 0) < 0)errquit("ptrace@si");
+	int status;
+	waitpid(child, &status, 0);
+	return;
+}
 
 void cmdStart(struct command* cmd, const int * state){
 	if(*state != LOADED){
