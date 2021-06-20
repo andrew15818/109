@@ -7,6 +7,7 @@
 #include <sys/wait.h>
 #include <elf.h>
 #include <assert.h>
+#include <fcntl.h>
 
 #include "cmd.h"
 #include "break.h"
@@ -74,7 +75,9 @@ pid_t initptrace(const char* prog){
 		// TODO: The &args looks weird...
 		char* args[] = {"", NULL};
 		printf("** Tracing %s\n", prog);
-		execvp("./hello64", args);
+		//execvp("./hello64", args);
+		execvp("./guess.nopie", args);
+
 		errquit("child");
 	}else{	
 		cmdSetPid(tmp);
@@ -144,12 +147,15 @@ int cmdAssignType(struct command* cmd, char* buf){
 		cmd->type = DISASM;	
 	}else if (!strncmp("dump", buf, 4) || !strncmp("x", buf, 1)){
 		printf("** Dump command\n");
+		if(cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
+			cmd->address = strtol(dst, NULL, 16);
+		}else{cmd->address = -1;}
 		cmd->type = DUMP;	
 	}else if (!strncmp("exit", buf, 4) || !strncmp("q", buf, 1)){
 		printf("** Exit command\n");
 		cmd->type = EXIT;	
 	}else if (!strncmp("getregs", buf, 7)){
-		printf("** Getregs command\n");
+		printf("** Getregs command\n");	
 		cmd->type = GETREGS;	
 	}else if (!strncmp("get", buf, 3) || !strncmp("g", buf, 1)){
 		printf("** Get command\n");
@@ -240,8 +246,7 @@ void cmdBreak(struct command* cmd, const int * state){
 	if(*state != RUNNING){
 	}
 	// add breakpoint to the list
-	breakAdd(cmd->address);
-	printf("** Breakpoint set at %lx\n", cmd->address);
+
 	/*TODO: Set the breakpoint with ptrace*/
 
 	/* 1. Use PEEKDATA to get the current data at cmd->address
@@ -251,14 +256,16 @@ void cmdBreak(struct command* cmd, const int * state){
 	*/
 	int status;
 	ptrace(PTRACE_GETREGS, child, 0, &cmd->regs);	
-
+	// save the old regs
+	breakAdd(cmd->address, cmd->regs);
 	unsigned int data = ptrace(PTRACE_PEEKDATA, child, (void*)cmd->address, NULL);
 	printf("** \tData at 0x%08x: 0x%08x\n", cmd->regs.rip, data);
 	// clear the data at that location
 	unsigned int datatrap = (data & 0x00)	| 0xcc;
 	ptrace(PTRACE_POKEDATA, child, (void*)cmd->address, (void*)datatrap);
-	// rewrite the data to cause sigtrap
+
 	data = ptrace(PTRACE_PEEKDATA, child, (void*)cmd->address, NULL);
+	printf("** \tData with trap: 0x%08x\n", data);
 
 	return;
 }
@@ -273,13 +280,13 @@ void cmdCont(struct command* cmd, const int* state){
 	// If the program is stopped continue it?
 	int status; 
 	printf("**About to wait\n");
-	if(waitpid(child, &status, 0) < 0)errquit("waitpid");
-	printf("**done waiting\n");
-	//if(WIFSTOPPED(status)){
+
+	if(WIFSTOPPED(status)){
 		ptrace(PTRACE_CONT, child, 0, 0);		
 		waitpid(child, &status, 0);
-		perror("done");
-	//}
+	//	perror("done");
+	}
+	printf("**done continuing\n");
 	if(waitpid(child, &status, 0) < 0)errquit("waitpid2");
 	return;
 }
@@ -293,10 +300,33 @@ void cmdDelete(struct command* cmd, const int * state){
 	breakDelete(cmd->val);
 }
 void cmdDisasm(struct command* cmd, const int * state){}
-void cmdDump(struct command* cmd, const int * state){}
+
+void cmdDump(struct command* cmd, const int * state){
+	if(*state != RUNNING){
+		printf("No program running.\n");	
+		return;
+	}
+	
+}
 void cmdExit(struct command* cmd, const int * state){}
 void cmdGet(struct command* cmd, const int * state){}
-void cmdGetregs(struct command* cmd, const int * state){}
+
+void cmdGetregs(struct command* cmd, const int * state){
+	if(*state != RUNNING){
+		printf("** No program running.\n");
+		return;
+	}
+
+	if(ptrace(PTRACE_GETREGS, child, (void*)cmd->address, &cmd->regs) < 0){
+		errquit("ptrace@getregs");
+	}
+	printf("RAX 0x%08x\t RBX 0x%08x\t RCX 0x%08x\t RDX 0x%08x\n", cmd->regs.rax, cmd->regs.rbx, cmd->regs.rcx, cmd->regs.rdx);
+	printf("R8  0x%08x\t  R9 0x%08x\t R10 0x%08x\t R11 0x%08x\n", cmd->regs.r8, cmd->regs.r9, cmd->regs.r10, cmd->regs.r11);
+	printf("R12 0x%08x\t R13 0x%08x\t R14 0x%08x\t R15 0x%08x\n", cmd->regs.r12, cmd->regs.r13, cmd->regs.r14, cmd->regs.r15);
+	printf("RDI 0x%08x\t RSI 0x%08x\t RBP 0x%08x\t RSP 0x%08x\n", cmd->regs.rdi, cmd->regs.rsi, cmd->regs.rbp, cmd->regs.rsp);
+	printf("RIP 0x%08x\t FLAGS 0x%08x\n", cmd->regs.rip, cmd->regs.eflags);
+	return;
+}
 void cmdHelp( struct command* cmd, const int* state){
 	const char* help = 
 		"- break {instruction-address}: add a break point\n"
@@ -360,7 +390,24 @@ void cmdRun(struct command* cmd, const int * state){
 	}
 	return;
 }
-void cmdVmmap(struct command* cmd, const int * state){}
+void cmdVmmap(struct command* cmd, const int * state){
+	if(*state != RUNNING){
+		printf("** No program running.\n");
+		return;
+	}
+	int pathsize = 20;
+	char path[pathsize];
+	snprintf(path, pathsize, "/proc/%d/maps", child);
+	printf("** Searching the depths of %s\n", path);
+
+	char buf[8192];
+	int fd, ret; 
+	if((fd = open(path, O_RDONLY)) < 0) errquit("open@vmmap");
+	printf("** FD: %d\n", fd);
+	while((ret = read(fd, buf, sizeof(buf))) > 0){write(1, buf, ret);}
+	close(fd);
+	return;
+}
 void cmdSet(struct command* cmd, const int * state){}
 void cmdSi(struct command* cmd, const int * state){}
 
