@@ -12,6 +12,11 @@ enum state{
 	LOADED,
 	RUNNING
 };
+enum ERRTYPE{
+	ERRNOPROG,
+	ERRPERM,
+	ERRSTATE	
+};
 enum commandType{
 	BREAK,
 	CONT,
@@ -51,7 +56,7 @@ extern funcPair funcPairs[];
 extern char FILENAME[STR_MAX];
 extern pid_t child;
 
-// TODO : For clarity name all the funcs cmd{name}
+// TODO : For clarity name all the funcs cmd{gname}
 int cmdNext(struct command*, int* , struct args*); // Execute the next command, return 1 on error/finished
 void cmdFromUser(struct command*, char* buf);
 int cmdAssignType(struct command*, char* buf);
@@ -61,6 +66,7 @@ int cmdSetState(int* , const int );
 int cmdSetPid(const pid_t);
 void cmdDispatch(struct command*, int*);
 pid_t initptrace(const char* prog);
+void err(int);
 
 /* Command functions*/
 void cmdBreak (struct command*, 	const int*);

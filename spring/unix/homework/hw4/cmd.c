@@ -31,6 +31,7 @@ funcPair funcPairs[CMD_NUM] = {
 	{.type=SI, 			.exec=cmdSi},
 	{.type=START, 		.exec=cmdStart},
 };
+
 char FILENAME[STR_MAX];
 pid_t child;
 int cmdSetPid(const pid_t newPid){
@@ -236,12 +237,9 @@ void cmdDispatch(struct command* cmd, int* state){
 
 /*** Command Exec functions***/
 void cmdBreak(struct command* cmd, const int * state){
-	/* Commented for experimental purposes.
 	if(*state != RUNNING){
-		printf("** No process running.\n");
-		return;
-	}	
-	*/
+	}
+	// add breakpoint to the list
 	breakAdd(cmd->address);
 	printf("** Breakpoint set at %lx\n", cmd->address);
 	/*TODO: Set the breakpoint with ptrace*/
@@ -252,19 +250,16 @@ void cmdBreak(struct command* cmd, const int * state){
 		3. Put the word back with POKEDATA
 	*/
 	int status;
-	/*
-	if(!(waitpid(child, &status, 0) && WIFSTOPPED(status))){
-		errquit("waitpid");
-		return;
-	}
-	*/
-	// Get the current instruction pointer of the program
-	printf("** Child pid: %d\n", child);
-	ptrace(PTRACE_GETREGS, child, 0, cmd->regs);	
-	printf("** Child's current eip: %llx\n", cmd->regs.rip);
+	ptrace(PTRACE_GETREGS, child, 0, &cmd->regs);	
 
-	unsigned long data = ptrace(PTRACE_PEEKDATA, child, (void*)cmd->address, NULL);
-	printf("Data at %lx: %lx\n", cmd->address, data);
+	unsigned int data = ptrace(PTRACE_PEEKDATA, child, (void*)cmd->address, NULL);
+	printf("** \tData at 0x%08x: 0x%08x\n", cmd->regs.rip, data);
+	// clear the data at that location
+	unsigned int datatrap = (data & 0x00)	| 0xcc;
+	ptrace(PTRACE_POKEDATA, child, (void*)cmd->address, (void*)datatrap);
+	// rewrite the data to cause sigtrap
+	data = ptrace(PTRACE_PEEKDATA, child, (void*)cmd->address, NULL);
+
 	return;
 }
 
@@ -277,12 +272,15 @@ void cmdCont(struct command* cmd, const int* state){
 	}
 	// If the program is stopped continue it?
 	int status; 
+	printf("**About to wait\n");
 	if(waitpid(child, &status, 0) < 0)errquit("waitpid");
-	if(WIFSTOPPED(status)){
+	printf("**done waiting\n");
+	//if(WIFSTOPPED(status)){
 		ptrace(PTRACE_CONT, child, 0, 0);		
 		waitpid(child, &status, 0);
 		perror("done");
-	}
+	//}
+	if(waitpid(child, &status, 0) < 0)errquit("waitpid2");
 	return;
 }
 /*Delete the breakpoints*/
@@ -292,6 +290,7 @@ void cmdDelete(struct command* cmd, const int * state){
 		return;
 	}
 	printf("** Deleting breakpoint %d\n", cmd->val);
+	breakDelete(cmd->val);
 }
 void cmdDisasm(struct command* cmd, const int * state){}
 void cmdDump(struct command* cmd, const int * state){}
@@ -318,6 +317,7 @@ void cmdHelp( struct command* cmd, const int* state){
 		"- start: start the program and stop at the first instruction\n";	
 	printf("%s", help);
 }
+// List the breakpoints.
 void cmdList(struct command* cmd, const int * state){
 	breakPrint();	
 }
@@ -375,31 +375,8 @@ void cmdStart(struct command* cmd, const int * state){
 	if(waitpid(childPID, &status, 0)< 0)errquit("waitpid");
 	if(WIFSTOPPED(status)){
 		int res = ptrace(PTRACE_SINGLESTEP, childPID, 0, 0);
-		printf("HOORAY\n");
 		if(waitpid(childPID, &status, 0)< 0)errquit("waitpid2");
 	}
-	/*
-	printf("** pid %d\n", childPID);
-	int status; 
-	waitpid(childPID, &status, 0);
-	assert(WIFSTOPPED(status));
-		printf("** HOaosjf;aliejf;qasejf;lajdfa\n");
-		ptrace(PTRACE_SINGLESTEP, childPID, 0, 0);		
-		waitpid(childPID, &status, 0);
-		perror("done");
-
-	*/
-	/*
-	pid_t childpid = initptrace(filename);
-	int status; 
-	if(waitpid(childpid, &status, 0) < 0)errquit("waitpid");	
-	printf("childpid: %d\n", childpid);
-	int res = ptrace(ptrace_singlestep, childpid, 0, 0);
-	printf("** res: %d\n", res);
-	while(wifstopped(status)){
-		printf("** hooray!\n");
-	}
-	*/
 	return;
 }
 
