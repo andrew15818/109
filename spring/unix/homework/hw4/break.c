@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 struct breakpointTable* table;
 
@@ -21,9 +22,12 @@ struct breakpoint* breakNew(){
     return bp;
 }
 
-int breakAdd(const long int address){
+int breakAdd(const long int address, struct user_regs_struct old){
 	struct breakpoint* bp = breakNew();
 	bp->address = address;
+	// save the old regs 
+	memcpy(&bp->old, &old, sizeof(bp->old));
+
 	if(table == NULL){table = breakNewTable();}
     if(table->head == NULL && table->tail == NULL){
         bp->index = 0; 
