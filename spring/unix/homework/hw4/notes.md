@@ -28,8 +28,22 @@ of the commands.
 
 
 ## TODO: 
-1. Actually get the ptrace and the capstone up and running 
-for teh various commands.
-2. Complete the code for the breakpoints linked list.
-3. Init the ptrace and the child process **only when the run/start 
-command is run**.
+Most of the bugs remaining are with the program flow, especially regarding the load commands.
+** Take commands from script ** (just readline into buffer?)
+
+- [x] break {instruction-address}: add a break point
+- [x] cont: continue execution
+- [ ] delete {break-point-id}: remove a break point (have to restore old word content)
+- [ ] disasm addr: disassemble instructions in a file or a memory region
+- [ ] dump addr [length]: dump memory content
+- [x] exit: terminate the debugger
+- [x] get reg: get a single value from a register
+- [x] getregs: show registers
+- [x] help: show this message
+- [x] list: list break points
+- [x] load {path/to/a/program}: load a program **buggy**
+- [x] run: run the program
+- [x] vmmap: show memory layout
+- [x] set reg val: get a single value to a register
+- [x] si: step into instruction
+- [x] start: start the program and stop at the first instruction
