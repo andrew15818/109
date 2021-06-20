@@ -7,8 +7,9 @@
 #include <unistd.h>
 #include <elf.h>
 
-#include "args.h"
 #include "cmd.h"
+#include "args.h"
+
 
 void logDebug(const char* msg){
 	printf("** %s\n", msg);
