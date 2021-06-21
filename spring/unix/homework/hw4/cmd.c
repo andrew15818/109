@@ -12,9 +12,13 @@
 
 #include "cmd.h"
 #include "break.h"
+#include "cap.h"
 
 #define STR_MAX 256
 #define CMD_NUM 16
+#define PEEKSIZE 4
+#define INSNUM 10
+
 /* Extern variable declarations */
 funcPair funcPairs[CMD_NUM] = {
 	{.type=BREAK, 		.exec=cmdBreak},
@@ -336,7 +340,19 @@ void cmdDisasm(struct command* cmd, const int * state){
 	if(capInit() == 1){
 		return;
 	}
+	long int ptr = cmd->address;
+	long int tmp = ptr;
+	long int ret;
+	long int space = 8 * INSNUM; // total amount of bytes to cover = 8 bits/ins * insnum
 	// Loop through given address and disassemble
+	for(ptr; ptr < cmd->address + space; ptr += PEEKSIZE){
+
+		//if((ret = ptrace(PTRACE_PEEKTEXT, child, ptr, 0)) < 0){errquit("peekdata@disasm");}
+		ret = ptrace(PTRACE_PEEKTEXT, child, ptr, 0);
+		//printf("** address: 0x%08x data: 0x%08x\n", ptr, ret);
+		printf("instruction is of %d bytes.\n", capDisassemble(ptr, ret));
+	}
+	
 }
 
 void cmdDump(struct command* cmd, const int * state){
