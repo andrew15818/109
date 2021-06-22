@@ -16,8 +16,9 @@
 
 #define STR_MAX 256
 #define CMD_NUM 16
-#define PEEKSIZE 4
+#define PEEKSIZE 8
 #define INSNUM 10
+#define INSSIZE (INSNUM << 3)
 
 /* Extern variable declarations */
 funcPair funcPairs[CMD_NUM] = {
@@ -151,6 +152,12 @@ int cmdAssignType(struct command* cmd, char* buf){
 		cmd->val = atoi(dst);
 		cmd->type = DELETE;	
 		return 0;
+	}else if (!strncmp("dump", buf, 4) || !strncmp("x", buf, 1)){
+		printf("** Dump command\n");
+		if(cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
+			cmd->address = strtol(dst, NULL, 16);
+		}else{cmd->address = -1;}
+		cmd->type = DUMP;	
 	}else if (!strncmp("disasm", buf, 6) || !strncmp("d", buf, 1)){
 		printf("** Disasm command\n");
 		if(!cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
@@ -160,12 +167,6 @@ int cmdAssignType(struct command* cmd, char* buf){
 		cmd->address = strtol(dst, NULL, 16);
 		printf("Got 0x%08lx\n", cmd->address);
 		cmd->type = DISASM;	
-	}else if (!strncmp("dump", buf, 4) || !strncmp("x", buf, 1)){
-		printf("** Dump command\n");
-		if(cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
-			cmd->address = strtol(dst, NULL, 16);
-		}else{cmd->address = -1;}
-		cmd->type = DUMP;	
 	}else if (!strncmp("exit", buf, 4) || !strncmp("q", buf, 1)){
 		printf("** Exit command\n");
 		cmd->type = EXIT;	
@@ -343,7 +344,7 @@ void cmdDisasm(struct command* cmd, const int * state){
 	long int ptr = cmd->address;
 	long int tmp, count = 0;
 	long int ret;
-	long int space = 8 * INSNUM; // total amount of bytes to cover = 8 bits/ins * insnum
+	long int space = 8* INSNUM; // total amount of bytes to cover = 8 bits/ins * insnum
 	// Loop through given address and disassemble
 	// Count kinda works better?
 	for(ptr; ptr < cmd->address + space && count < 10; ptr += PEEKSIZE){
@@ -359,7 +360,14 @@ void cmdDump(struct command* cmd, const int * state){
 		printf("No program running.\n");	
 		return;
 	}
-	
+	long long int ptr = cmd->address;
+	long long int ret;
+	int count = 0;
+	for(ptr; ptr < cmd->address + INSSIZE && count < 10; ptr++){
+		ret = ptrace(PTRACE_PEEKTEXT, child, ptr, 0);
+		if(ret < 0)	{continue;}
+		capDump(ptr, ret);
+	}		
 }	
 
 // Exit and terminate the child process.
