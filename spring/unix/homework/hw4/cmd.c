@@ -42,6 +42,8 @@ funcPair funcPairs[CMD_NUM] = {
 
 char FILENAME[STR_MAX];
 pid_t child;
+FILE* fp = NULL;
+
 int cmdSetPid(const pid_t newPid){
 	child = newPid;	
 	printf("** PID: %d\n", child);
@@ -82,21 +84,41 @@ pid_t initptrace(const char* prog){
 		// TODO: The &args looks weird...
 		char* args[] = {"", NULL};
 		printf("** Tracing %s\n", prog);
-		execvp("./hello64", args);
+		execvp(FILENAME, args);
 		//execvp("./guess.nopie", args);
 
 		errquit("child");
 	}else{	
 		cmdSetPid(tmp);
 		ptrace(PTRACE_SETOPTIONS, tmp, 0, PTRACE_O_EXITKILL);
+		ptrace(PTRACE_ATTACH, tmp, 0, 0);
 		return tmp;
 	}
 	
 	return tmp;	
 }
 
-
-
+// Only check if  the program has terminated after one of these
+int isRunCommand(struct command* cmd){
+	return (cmd->type == RUN || 
+		cmd->type == CONT 	||
+		cmd->type == START 	|| 
+		cmd->type == SI
+		);
+}
+int cmdSetScript(const char* filename){
+	fp = fopen(filename, "r");
+	return (fp == NULL);
+	errquit("script");
+}
+// Store the next command in buf
+int cmdFromScript( FILE* fp, char* buf){
+	if(fgets(buf, STR_MAX, fp) == NULL){
+		return 1;
+	} 
+	printf("** Read: %s\n", buf);
+	return 0;
+}
 /* Get the next command
  * @state:  program state, some commands depend
  * @arg: whether -s given or not
@@ -105,16 +127,24 @@ int cmdNext(struct command* cmd, int* state, struct args* arg){
 	enum commandType tp;
 	char buf[STR_MAX];
 	// TODO: Check if cmd needs to be read from script
-	/*if (arg->s){
-	 * }*/
-	cmdFromUser(cmd, buf);
-	cmdAssignType(cmd, buf);
-	/*
-	if(cmd->type == EXIT){
-		return 1;	
+	if (arg->s){
+		// When we reach script EOF
+		if(cmdFromScript(fp, buf)){
+			cmdExit(cmd, state);
+		}
+	}else{
+		cmdFromUser(cmd, buf);
 	}
-	*/
+
+	cmdAssignType(cmd, buf);
+	
 	cmdDispatch(cmd, state);
+	// Check if the child proces terminateD
+	int status;
+	if(isRunCommand(cmd) && waitpid(child, &status, WNOHANG) != 0){
+		printf("** Child process is done, returning to main.\n");
+		return 1;
+	}
 	return 0;
 }
 void cmdFromUser(struct command* cmd, char* buf){
@@ -210,18 +240,18 @@ int cmdAssignType(struct command* cmd, char* buf){
 		printf("** Set command\n");
 		cmd->type = SET;	
 		if(!cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
-			printf("First parameter error.");
+			fprintf(stderr, "First parameter error.");
 			return 1;
 		}
 		// name of register to change
 		strncpy(cmd->path, dst, strlen(dst));
 		memset(dst, '\0', sizeof(dst));
 		if(!cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 2)){
-			printf("Second parameter error.");
+			fprintf(stderr, "Second parameter error.");
 			return 1;
 		}
 		cmd->address = strtol(dst, NULL, 16);
-		printf("Going to set %s to : 0x%08lx\n", cmd->path, cmd->address);
+		printf("**Going to set %s to : 0x%08lx\n", cmd->path, cmd->address);
 	}
 	return cmd->type;
 }
@@ -257,7 +287,7 @@ int cmdSetExecFilename(const char* path){
 		return 1;
 	}
 	strncpy(FILENAME, path, STR_MAX);	
-	printf("** Set the executable name to %s\n", FILENAME);
+	fprintf(stderr, "** Set the executable name to %s\n", FILENAME);
 	return 0;
 }
 // Call the appropriate function
@@ -291,15 +321,16 @@ void cmdBreak(struct command* cmd, const int * state){
 	int status;
 	ptrace(PTRACE_GETREGS, child, 0, &cmd->regs);	
 	// save the old regs
-	breakAdd(cmd->address, cmd->regs);
+	
 	unsigned int data = ptrace(PTRACE_PEEKDATA, child, (void*)cmd->address, NULL);
-	printf("** \tData at 0x%08x: 0x%08x\n", cmd->regs.rip, data);
+	breakAdd(cmd->address, data, cmd->regs);
+	fprintf(stderr,"** \tData at 0x%08x: 0x%08x\n", cmd->regs.rip, data);
 	// clear the data at that location
 	unsigned int datatrap = (data & 0x00)	| 0xcc;
 	ptrace(PTRACE_POKEDATA, child, (void*)cmd->address, (void*)datatrap);
 
 	data = ptrace(PTRACE_PEEKDATA, child, (void*)cmd->address, NULL);
-	printf("** \tData with trap: 0x%08x\n", data);
+	fprintf(stderr,"** \tData with trap: 0x%08x\n", data);
 
 	return;
 }
@@ -308,26 +339,26 @@ void cmdBreak(struct command* cmd, const int * state){
 /*TODO: Debug this*/
 void cmdCont(struct command* cmd, const int* state){
 	if(*state != RUNNING){
-		printf("** No program running.\n");	
+		fprintf(stderr,"** No program running.\n");	
 		return;
 	}
 	// If the program is stopped continue it?
 	int status; 
-	printf("**About to wait\n");
+	//printf("**About to wait\n");
 
 	//if(WIFSTOPPED(status)){
 		ptrace(PTRACE_CONT, child, 0, 0);		
 		waitpid(child, &status, 0);
-	//	perror("done");
+		//perror("done");
 	//}
-	printf("**done continuing\n");
+	//printf("**done continuing\n");
 	//if(waitpid(child, &status, 0) < 0)errquit("waitpid2");
 	return;
 }
 /*Delete the breakpoints*/
 void cmdDelete(struct command* cmd, const int * state){
 	if(*state != RUNNING){
-		printf("** No program running.\n");
+		fprintf(stderr, "** No program running.\n");
 		return;
 	}
 	printf("** Deleting breakpoint %d\n", cmd->val);
@@ -335,7 +366,7 @@ void cmdDelete(struct command* cmd, const int * state){
 }
 void cmdDisasm(struct command* cmd, const int * state){
 	if(*state!= RUNNING){
-		printf("** No program running.\n");
+		fprintf(stderr,"** No program running.\n");
 		return;
 	}
 	if(capInit() == 1){
@@ -349,7 +380,7 @@ void cmdDisasm(struct command* cmd, const int * state){
 	// Count kinda works better?
 	for(ptr; ptr < cmd->address + space && count < 10; ptr += PEEKSIZE){
 
-		if((ret = ptrace(PTRACE_PEEKTEXT, child, ptr, 0)) < 0){continue;}
+		if((ret = ptrace(PTRACE_PEEKTEXT, child, ptr, 0)) < 0){/*printf("** You done messed up.\n"*/continue;}
 		count += capDisassemble(ptr, ret);
 	}
 	
@@ -357,7 +388,7 @@ void cmdDisasm(struct command* cmd, const int * state){
 
 void cmdDump(struct command* cmd, const int * state){
 	if(*state != RUNNING){
-		printf("No program running.\n");	
+		fprintf(stderr,"No program running.\n");	
 		return;
 	}
 	long long int ptr = cmd->address;
@@ -376,12 +407,12 @@ void cmdExit(struct command* cmd, const int * state){
 		int ret = kill(child, SIGTERM);	
 		if(ret == -1)errquit("kill@Exit");
 	}
-	printf("** Killed process [%d]\n", child);
+	fprintf(stderr,"** Killed process [%d]\n", child);
 	exit(0);
 }
 void cmdGet(struct command* cmd, const int * state){
 	if(*state != RUNNING){
-		printf("** No program running.\n");
+		fprintf(stderr,"** No program running.\n");
 		return;
 	}
 	if(ptrace(PTRACE_GETREGS, child, 0, &cmd->regs) < 0) errquit("getregs@get");
@@ -410,7 +441,7 @@ void cmdGet(struct command* cmd, const int * state){
 
 void cmdGetregs(struct command* cmd, const int * state){
 	if(*state != RUNNING){
-		printf("** No program running.\n");
+		fprintf(stderr, "** No program running.\n");
 		return;
 	}
 
@@ -456,14 +487,14 @@ void getTextLimit(Elf64_Ehdr hdr){
 void cmdLoad(struct command* cmd, int * state){
 	// We can only load a program if one isn't loaded already right?
 	if(*state != ANY){
-		printf("** No program loaded.\n");
+		fprintf(stderr, "** No program loaded.\n");
 		return;
 	}
 	
 	FILE* fp = fopen(FILENAME, "rb");
 
 	if(fp == NULL){
-		printf("** Could not open file %s\n", FILENAME);
+		fprintf(stderr, "** Could not open file %s\n", FILENAME);
 		return;
 	}	
 	
@@ -472,19 +503,19 @@ void cmdLoad(struct command* cmd, int * state){
 	//TEST
 	getTextLimit(header);
 	cmdSetState(state, LOADED);
-	printf("** Program '%s' loaded. entry point 0x%lx\n", FILENAME, header.e_entry);
+	printf("** 0x%lx\n", FILENAME, header.e_entry);
 }
 
 void cmdRun(struct command* cmd, const int * state){
 	if(*state == RUNNING){
-		printf("** Program is already running.\n");
+		fprintf(stderr, "** Program is already running.\n");
 	}else if(*state == ANY){
-		printf("** No program is running yet.\n");
+		fprintf(stderr,"** No program is running yet.\n");
 		return;
 	}
 	cmdSetState(state, RUNNING);
 	pid_t childPID = initptrace(FILENAME);
-	printf("** pid %d\n", childPID);
+	//printf("** pid %d\n", childPID);
 	int status; 
 	if(waitpid(childPID, &status, 0) < 0)errquit("waitpid");
 	if(WIFSTOPPED(status)){
@@ -496,7 +527,7 @@ void cmdRun(struct command* cmd, const int * state){
 }
 void cmdVmmap(struct command* cmd, const int * state){
 	if(*state != RUNNING){
-		printf("** No program running.\n");
+		fprintf(stderr, "** No program running.\n");
 		return;
 	}
 	int pathsize = 20;
@@ -506,7 +537,7 @@ void cmdVmmap(struct command* cmd, const int * state){
 	char buf[8192];
 	int fd, ret; 
 	if((fd = open(path, O_RDONLY)) < 0) errquit("open@vmmap");
-	printf("** FD: %d\n", fd);
+	//printf("** FD: %d\n", fd);
 	while((ret = read(fd, buf, sizeof(buf))) > 0){write(1, buf, ret);}
 	close(fd);
 	return;
@@ -539,24 +570,27 @@ void cmdSet(struct command* cmd, const int * state){
 
 	if(ptrace(PTRACE_SETREGS, child, 0, &cmd->regs) < 0)errquit("setregs@cmdSet");
 	//curious
-	struct user_regs_struct regs;
-	if(ptrace(PTRACE_GETREGS, child, 0, &regs) < 0)errquit("setregs@cmdSet");
+	//struct user_regs_struct regs;
+	//if(ptrace(PTRACE_GETREGS, child, 0, &regs) < 0)errquit("setregs@cmdSet");
 
 }
 void cmdSi(struct command* cmd, const int * state){
 	if(*state != RUNNING ){
-		printf("** No program running.\n");
+		fprintf(stderr, "** No program running.\n");
 		return;
 	}
 	if(ptrace(PTRACE_SINGLESTEP, child, 0, 0) < 0)errquit("ptrace@si");
 	int status;
 	waitpid(child, &status, 0);
+	struct user_regs_struct regs;
+	if(ptrace(PTRACE_GETREGS, child, 0, &regs)){errquit("getregs@si");}
+	fprintf(stderr,"** Now at 0x%08llx\n", regs.rip);
 	return;
 }
 
 void cmdStart(struct command* cmd, const int * state){
 	if(*state != LOADED){
-		printf("** Program is either not loaded or running.\n");
+		fprintf(stderr,"** Program is either not loaded or running.\n");
 		return;
 	}
 	cmdSetState(state, RUNNING);

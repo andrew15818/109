@@ -57,10 +57,13 @@ typedef struct funcPair{
 extern funcPair funcPairs[];
 extern char FILENAME[STR_MAX];
 extern pid_t child;
+extern FILE* scriptFp;
 
 // TODO : For clarity name all the funcs cmd{gname}
 int cmdNext(struct command*, int* , struct args*); // Execute the next command, return 1 on error/finished
 void cmdFromUser(struct command*, char* buf);
+int cmdFromScript(FILE*, char*);
+int cmdSetScript(const char*);
 int cmdAssignType(struct command*, char* buf);
 int cmdGetParamNo(char* buf, char* src, int bufsize, int srcsize, int paramNo);
 int cmdSetExecFilename(const char*);

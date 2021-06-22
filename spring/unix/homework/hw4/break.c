@@ -22,9 +22,10 @@ struct breakpoint* breakNew(){
     return bp;
 }
 
-int breakAdd(const long int address, struct user_regs_struct old){
+int breakAdd(const long int address, const long int orig, struct user_regs_struct old){
 	struct breakpoint* bp = breakNew();
 	bp->address = address;
+    bp->original = orig;
 	// save the old regs 
 	memcpy(&bp->old, &old, sizeof(bp->old));
 

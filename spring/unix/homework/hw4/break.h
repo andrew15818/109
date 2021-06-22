@@ -4,6 +4,7 @@
 struct breakpoint{
 	long int address;
 	long int index;
+	long long int original;
 	struct breakpoint* next;
 	struct user_regs_struct old;
 } ;
@@ -18,7 +19,7 @@ extern struct breakpointTable* table;
 
 struct breakpointTable* breakNewTable();
 struct breakpoint* breakNew();
-int breakAdd(const long int , struct user_regs_struct);
+int breakAdd(const long int ,const long int, struct user_regs_struct);
 int breakDelete(int index);
 int breakCleanup();
 

@@ -18,22 +18,29 @@ void logDebug(const char* msg){
 int main(int argc, char** argv){
 	struct args arg;
 	parseArgs(argc, argv, &arg);	
-	
+
 	int st;	
 	struct command tmp;
 	cmdSetState(&st, ANY);
 	
+
 	if(arg.p){
 		cmdSetExecFilename(arg.prog);				
 		cmdLoad(&tmp, &st); 
-	}	
+	}
+	if(arg.s){
+		cmdSetScript(arg.script);
+	}
+			
 	
 	while(1){	
 		// Get next command and args
 		// dispatch next command to correct function
 		struct command cmd;
+		// Once the command is done
 		if(cmdNext(&cmd, &st, &arg)){
-			break;	
+			cmdSetState(&st, ANY);
+			continue; // Just continue and reset?
 		}
 	}
 	return 0;

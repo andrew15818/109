@@ -29,11 +29,11 @@ of the commands.
 
 ## TODO: 
 Most of the bugs remaining are with the program flow, especially regarding the load commands.
-** Take commands from script ** (just readline into buffer?)
+Delete breakpoint. I don't think I'm setting the breakpoint correctly.
 
 - [x] break {instruction-address}: add a break point
 - [x] cont: continue execution
-- [ ] delete {break-point-id}: remove a break point (have to restore old word content)
+- [ ] delete {break-point-id}: remove a break point (have to restore old content)
 - [ ] disasm addr: disassemble instructions in a file or a memory region
 - [ ] dump addr [length]: dump memory content
 - [x] exit: terminate the debugger
