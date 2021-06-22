@@ -341,16 +341,15 @@ void cmdDisasm(struct command* cmd, const int * state){
 		return;
 	}
 	long int ptr = cmd->address;
-	long int tmp = ptr;
+	long int tmp, count = 0;
 	long int ret;
 	long int space = 8 * INSNUM; // total amount of bytes to cover = 8 bits/ins * insnum
 	// Loop through given address and disassemble
-	for(ptr; ptr < cmd->address + space; ptr += PEEKSIZE){
+	// Count kinda works better?
+	for(ptr; ptr < cmd->address + space && count < 10; ptr += PEEKSIZE){
 
-		//if((ret = ptrace(PTRACE_PEEKTEXT, child, ptr, 0)) < 0){errquit("peekdata@disasm");}
-		ret = ptrace(PTRACE_PEEKTEXT, child, ptr, 0);
-		//printf("** address: 0x%08x data: 0x%08x\n", ptr, ret);
-		printf("instruction is of %d bytes.\n", capDisassemble(ptr, ret));
+		if((ret = ptrace(PTRACE_PEEKTEXT, child, ptr, 0)) < 0){continue;}
+		count += capDisassemble(ptr, ret);
 	}
 	
 }
@@ -441,6 +440,10 @@ void cmdHelp( struct command* cmd, const int* state){
 void cmdList(struct command* cmd, const int * state){
 	breakPrint();	
 }
+void getTextLimit(Elf64_Ehdr hdr){
+	printf("0x%08x\n", ( hdr.e_entry + hdr.e_shoff + (hdr.e_shentsize * hdr.e_shnum)));
+	return;
+}
 /* Read the ELF header for the entry point.*/
 void cmdLoad(struct command* cmd, int * state){
 	// We can only load a program if one isn't loaded already right?
@@ -455,12 +458,15 @@ void cmdLoad(struct command* cmd, int * state){
 		printf("** Could not open file %s\n", FILENAME);
 		return;
 	}	
-
+	
 	Elf64_Ehdr header;	
 	fread(&header, 1, sizeof(header), fp);
+	//TEST
+	getTextLimit(header);
 	cmdSetState(state, LOADED);
 	printf("** Program '%s' loaded. entry point 0x%lx\n", FILENAME, header.e_entry);
 }
+
 void cmdRun(struct command* cmd, const int * state){
 	if(*state == RUNNING){
 		printf("** Program is already running.\n");
