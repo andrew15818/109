@@ -8,6 +8,7 @@
 #include <sys/wait.h>
 #include <elf.h>
 #include <assert.h>
+#include <signal.h>
 #include <fcntl.h>
 
 #include "cmd.h"
@@ -43,7 +44,15 @@ funcPair funcPairs[CMD_NUM] = {
 char FILENAME[STR_MAX];
 pid_t child;
 FILE* fp = NULL;
+long int lastDisasmAddress = -1;
+long int lastDumpAddress = -1;
 
+void saveDumpAddress(long long int newAddress){
+	lastDumpAddress = newAddress;
+}
+void saveDisasmAddress(long long int newAddress){
+	lastDisasmAddress = newAddress;
+}
 int cmdSetPid(const pid_t newPid){
 	child = newPid;	
 	printf("** PID: %d\n", child);
@@ -80,6 +89,8 @@ pid_t initptrace(const char* prog){
 	// Child code
 	if( tmp == 0){
 		if(ptrace(PTRACE_TRACEME, 0, 0, 0) < 0){errquit("traceme");}
+		// register breakpoint handler
+
 	
 		// TODO: The &args looks weird...
 		char* args[] = {"", NULL};
@@ -102,7 +113,7 @@ pid_t initptrace(const char* prog){
 int isRunCommand(struct command* cmd){
 	return (cmd->type == RUN || 
 		cmd->type == CONT 	||
-		cmd->type == START 	|| 
+	//	cmd->type == START 	|| 
 		cmd->type == SI
 		);
 }
@@ -116,8 +127,7 @@ int cmdFromScript( FILE* fp, char* buf){
 	if(fgets(buf, STR_MAX, fp) == NULL){
 		return 1;
 	} 
-	printf("** Read: %s\n", buf);
-	return 0;
+	printf(" \n"); return 0;
 }
 /* Get the next command
  * @state:  program state, some commands depend
@@ -162,19 +172,18 @@ int cmdAssignType(struct command* cmd, char* buf){
 	char dst[STR_MAX] = {'\0'};
 	memset(cmd->path, '\0', sizeof(cmd->path));
 	if(!strncmp("br", buf, 2) || !strncmp("b", buf, 1)){
-		printf("** Break command\n");
+		//fprintf(stderr,"** Break command\n");
 		if(!cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
-			printf("** \tInvalid argument.\n");
+			fprintf(stderr,"** \tInvalid argument.\n");
 			return 1;
 		}
 		cmd->address = strtol(dst, NULL, 16);
-		printf("** \tBreakpoint at %lx\n", cmd->address);
 		cmd->type = BREAK;	
 	}else if (!strncmp("cont", buf, 4) || !strncmp("c", buf, 1)){
-		printf("** Cont command\n");
+		//fprintf(stderr,"** Cont command\n");
 		cmd->type = CONT;	
 	}else if (!strncmp("delete", buf, 6)){
-		printf("** Delete command\n");
+		//fprintf(stderr,"** Delete command\n");
 		if(!cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
 			printf("** \tInvalid argument.\n");
 			return 1;
@@ -183,28 +192,36 @@ int cmdAssignType(struct command* cmd, char* buf){
 		cmd->type = DELETE;	
 		return 0;
 	}else if (!strncmp("dump", buf, 4) || !strncmp("x", buf, 1)){
-		printf("** Dump command\n");
+		//fprintf(stderr,"** Dump command\n");
 		if(cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
 			cmd->address = strtol(dst, NULL, 16);
-		}else{cmd->address = -1;}
-		cmd->type = DUMP;	
-	}else if (!strncmp("disasm", buf, 6) || !strncmp("d", buf, 1)){
-		printf("** Disasm command\n");
-		if(!cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
-			printf("Erorr getting address.\n");
+		}else if(lastDumpAddress == -1){
+			fprintf(stderr, "** No previous address to dump.\n");	
 			return 1;
-		}	
-		cmd->address = strtol(dst, NULL, 16);
+		}else{
+			cmd->address = lastDumpAddress;	
+		}
+		cmd->type = DUMP;		
+	}else if (!strncmp("disasm", buf, 6) || !strncmp("d", buf, 1)){
+		//fprintf(stderr,"** Disasm command\n");
+		if(cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){	
+			cmd->address = strtol(dst, NULL, 16);
+		
+		}else if(lastDisasmAddress == -1){
+			fprintf(stderr, "** No previous address to disassemble..\n");		
+			return 1;
+		}else{cmd->address = lastDisasmAddress;}	
+	
 		printf("Got 0x%08lx\n", cmd->address);
 		cmd->type = DISASM;	
 	}else if (!strncmp("exit", buf, 4) || !strncmp("q", buf, 1)){
-		printf("** Exit command\n");
+		//fprintf(stderr,"** Exit command\n");
 		cmd->type = EXIT;	
 	}else if (!strncmp("getregs", buf, 7)){
-		printf("** Getregs command\n");	
+		//fprintf(stderr,"** Getregs command\n");	
 		cmd->type = GETREGS;	
 	}else if (!strncmp("get", buf, 3) || !strncmp("g", buf, 1)){
-		printf("** Get command\n");
+		//fprintf(stderr,"** Get command\n");
 		if(!cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
 			printf("** Invalid register.\n");
 			return 1;
@@ -212,32 +229,32 @@ int cmdAssignType(struct command* cmd, char* buf){
 		strncpy(cmd->path, dst, strlen(dst));
 		cmd->type = GET;	
 	}else if (!strncmp("help", buf, 4) || !strncmp("h", buf, 1)){
-		printf("** Help command\n");
+		//fprintf(stderr,"** Help command\n");
 		cmd->type = HELP;	
 	}else if (!strncmp("load", buf, 4)){
-		printf("** Load command\n");
+		//fprintf(stderr,"** Load command\n");
 		if(cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
 			strncpy(cmd->path, dst, strlen(cmd->path));
 			cmdSetExecFilename(dst);
 		}
 		cmd->type = LOAD;	
 	}else if (!strncmp("list", buf, 4) || !strncmp("l", buf, 1)){
-		printf("** List command\n");
+		//fprintf(stderr,"** List command\n");
 		cmd->type = LIST;	
 	}else if (!strncmp("run", buf, 3) || !strncmp("r", buf, 1)){
-		printf("** Run command\n");
+		//fprintf(stderr,"** Run command\n");
 		cmd->type = RUN;	
 	}else if (!strncmp("vmmap", buf, 5) || !strncmp("m", buf, 1)){
-		printf("** Vmmap command\n");
+		//fprintf(stderr,"** Vmmap command\n");
 		cmd->type = VMMAP;	
 	}else if (!strncmp("start", buf, 5)){
-		printf("** Start command\n");
+		//fprintf(stderr,"** Start command\n");
 		cmd->type = START;	
 	}else if (!strncmp("si", buf, 2)){
-		printf("** Si command\n");
+		//fprintf(stderr,"** Si command\n");
 		cmd->type = SI;	
 	}else if (!strncmp("set", buf, 3) || !strncmp("s", buf, 1)){
-		printf("** Set command\n");
+		//fprintf(stderr,"** Set command\n");
 		cmd->type = SET;	
 		if(!cmdGetParamNo(dst, buf, STR_MAX, strlen(buf), 1)){
 			fprintf(stderr, "First parameter error.");
@@ -251,7 +268,7 @@ int cmdAssignType(struct command* cmd, char* buf){
 			return 1;
 		}
 		cmd->address = strtol(dst, NULL, 16);
-		printf("**Going to set %s to : 0x%08lx\n", cmd->path, cmd->address);
+		//printf("**Going to set %s to : 0x%08lx\n", cmd->path, cmd->address);
 	}
 	return cmd->type;
 }
@@ -287,7 +304,7 @@ int cmdSetExecFilename(const char* path){
 		return 1;
 	}
 	strncpy(FILENAME, path, STR_MAX);	
-	fprintf(stderr, "** Set the executable name to %s\n", FILENAME);
+	//fprintf(stderr, "** Set the executable name to %s\n", FILENAME);
 	return 0;
 }
 // Call the appropriate function
@@ -308,10 +325,9 @@ void cmdDispatch(struct command* cmd, int* state){
 /*** Command Exec functions***/
 void cmdBreak(struct command* cmd, const int * state){
 	if(*state != RUNNING){
+		fprintf(stderr,"No program running.\n");
+		return;
 	}
-	// add breakpoint to the list
-
-	/*TODO: Set the breakpoint with ptrace*/
 
 	/* 1. Use PEEKDATA to get the current data at cmd->address
 		2. Save the register content?
@@ -319,20 +335,47 @@ void cmdBreak(struct command* cmd, const int * state){
 		3. Put the word back with POKEDATA
 	*/
 	int status;
+	struct user_regs_struct regs;
 	ptrace(PTRACE_GETREGS, child, 0, &cmd->regs);	
 	// save the old regs
 	
 	unsigned int data = ptrace(PTRACE_PEEKDATA, child, (void*)cmd->address, NULL);
+	// Add breakpoint to list
 	breakAdd(cmd->address, data, cmd->regs);
-	fprintf(stderr,"** \tData at 0x%08x: 0x%08x\n", cmd->regs.rip, data);
+	//fprintf(stderr,"** \tData at 0x%08x: 0x%08x\n", cmd->address, data);
+
 	// clear the data at that location
-	unsigned int datatrap = (data & 0x00)	| 0xcc;
+	unsigned int datatrap = (data & 0xFFFFFF00)	| 0xcc;
 	ptrace(PTRACE_POKEDATA, child, (void*)cmd->address, (void*)datatrap);
 
 	data = ptrace(PTRACE_PEEKDATA, child, (void*)cmd->address, NULL);
-	fprintf(stderr,"** \tData with trap: 0x%08x\n", data);
+	//fprintf(stderr,"** \tData with trap: 0x%08x\n", data);
+	
+	// Continue untill we hit the breakpoint
+	ptrace(PTRACE_CONT, child, 0, 0);
+	waitpid(child, &status, 0);
+	/*
+	if(WIFSTOPPED(status)){
+		fprintf(stderr, "** Got the signal %s\n", strsignal(WSTOPSIG(status)));	
+	}else{
+		errquit("waitpid@cmdBreak");	
+	}
+	*/
 
+	// See where we are now (should be one past the breakpoint
+	ptrace(PTRACE_GETREGS, child, 0, &regs);
+	fprintf(stderr,"Breakpoint at 0x%08x\n", regs.rip);
+
+	// Change the trap to the original data
+	ptrace(PTRACE_POKEDATA, child, (void*)cmd->address, (void*) data);
+	// Wind the instruction back to the breakpoint address
+	regs.rip -= 1;
+	ptrace(PTRACE_SETREGS, child, 0, &regs);
+	
+	ptrace(PTRACE_SINGLESTEP, child, 0, 0);
+	//ptrace(PTRACE_CONT, child, 0, 0);
 	return;
+	
 }
 
 /* Check if process is running and continue? */
@@ -345,14 +388,14 @@ void cmdCont(struct command* cmd, const int* state){
 	// If the program is stopped continue it?
 	int status; 
 	//printf("**About to wait\n");
-
+	//waitpid(child, &status, 0);
 	//if(WIFSTOPPED(status)){
 		ptrace(PTRACE_CONT, child, 0, 0);		
-		waitpid(child, &status, 0);
+	//	waitpid(child, &status, 0);
 		//perror("done");
 	//}
 	//printf("**done continuing\n");
-	//if(waitpid(child, &status, 0) < 0)errquit("waitpid2");
+	if(waitpid(child, &status, 0) < 0)errquit("waitpid2");
 	return;
 }
 /*Delete the breakpoints*/
@@ -372,6 +415,7 @@ void cmdDisasm(struct command* cmd, const int * state){
 	if(capInit() == 1){
 		return;
 	}
+	saveDisasmAddress(cmd->address);
 	long int ptr = cmd->address;
 	long int tmp, count = 0;
 	long int ret;
@@ -388,9 +432,13 @@ void cmdDisasm(struct command* cmd, const int * state){
 
 void cmdDump(struct command* cmd, const int * state){
 	if(*state != RUNNING){
-		fprintf(stderr,"No program running.\n");	
+		fprintf(stderr,"** No program running.\n");	
 		return;
 	}
+	if(capInit() == 1){
+		fprintf(stderr, "** Couldn't init capstone.\n");
+	}
+	saveDumpAddress(cmd->address);
 	long long int ptr = cmd->address;
 	long long int ret;
 	int count = 0;

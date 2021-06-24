@@ -5,6 +5,13 @@
 #include <string.h>
 
 struct breakpointTable* table;
+int inited = 0;
+int isHandlerRegistered(){
+	return inited;
+}
+int setHandlerInited(int val){
+	inited  = val;	
+}
 
 struct breakpointTable* breakNewTable(){
     struct breakpointTable* tb = malloc(sizeof(struct breakpointTable));
@@ -69,6 +76,7 @@ int breakDelete(int index){
 }
 /* Debug */
 void breakPrint(){
+	if(table == NULL){ table = breakNewTable();}
     struct breakpoint* sent = table->head;
     while(sent != NULL){
        printf("b[%ld] = %lx\n", sent->index, sent->address); 

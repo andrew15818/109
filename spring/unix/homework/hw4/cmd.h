@@ -58,6 +58,8 @@ extern funcPair funcPairs[];
 extern char FILENAME[STR_MAX];
 extern pid_t child;
 extern FILE* scriptFp;
+extern long int lastDisasmAddress;
+extern long int lastDumpAddress;
 
 // TODO : For clarity name all the funcs cmd{gname}
 int cmdNext(struct command*, int* , struct args*); // Execute the next command, return 1 on error/finished

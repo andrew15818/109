@@ -15,6 +15,13 @@ int capInit(){
     }
     return 0;
 }
+void capPrintInt(cs_insn* insn){
+	char bytes[128] = "";
+	for(int i =0; i< insn->size; i++){
+		snprintf(&bytes[i*3], 4, "%2.2x ", insn->bytes[i]);
+	}
+	printf("0x%"PRIx64":%-32s \t%s\t\t%s\n", insn->address, bytes, insn->mnemonic, insn->op_str);	
+}
 int capDump(long long int address, long long int data){
 	//char buf[8];			
 	char buf[8];
@@ -27,7 +34,8 @@ int capDump(long long int address, long long int data){
 	ret += count;
 
 	for(int j = 0; j < count; j++){
-		printf( "0x%012llx: %-32s\t%-10s%s\n", insn[j].address, insn[j].bytes);
+		//printf( "0x%012llx: %-32s\t%-10s%s\n", insn[j].address, insn[j].bytes);
+		capPrintInt(&insn[j]);
 		size += insn[j].size;
 		continue;
 	}
@@ -35,13 +43,7 @@ int capDump(long long int address, long long int data){
 	return count;
 
 }
-void capPrintInt(cs_insn* insn){
-	char bytes[128] = "";
-	for(int i =0; i< insn->size; i++){
-		snprintf(&bytes[i*3], 4, "%2.2x ", insn->bytes[i]);
-	}
-	printf("0x%"PRIx64":%-32s \t%s\t\t%s\n", insn->address, bytes, insn->mnemonic, insn->op_str);	
-}
+
 // Disassemble single instruction
 // Print out contents of data array
 int capDisassemble(long long int address, long long int data){

@@ -16,12 +16,15 @@ struct breakpointTable{
 };
 
 extern struct breakpointTable* table;
+extern int inited ;
 
 struct breakpointTable* breakNewTable();
 struct breakpoint* breakNew();
 int breakAdd(const long int ,const long int, struct user_regs_struct);
 int breakDelete(int index);
 int breakCleanup();
+int isHandlerRegistered();
+int setHandlerInited(int);
 
 // Debug
 void breakPrint();
